@@ -35,6 +35,8 @@ Note: If you're using Linux Bash for Windows, [see this guide](https://www.howto
 
 Distribution is handled by electron-builder. https://github.com/electron-userland/electron-builder
 
+Then you can run `yarn app:dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `yarn app:dir` (only generates the package directory without really packaging it. This is useful for testing purposes).
+
 ## Resources for Learning Electron
 
 - [electronjs.org/docs](https://electronjs.org/docs) - all of Electron's documentation
