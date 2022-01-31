@@ -8,10 +8,27 @@
     <title>Hello World!</title>
   </head>
   <body>
+    
+
     <h1>Hello World!</h1>
     We are using Node.js <span id="node-version"></span>,
     Chromium <span id="chrome-version"></span>,
     and Electron <span id="electron-version"></span>.
+
+    <h1>NP Prevalidator</h1>
+    <form id="validateDataForm">
+      <div>
+        <label>Select metadata csv</label>
+        <input type="file" accept=".csv" id="metadata" name="metadata"/>
+      </div>
+      <div>
+        <label>Select data folder</label>
+        <input type="file" id="dataFolder" name="dataFolder" webkitdirectory directory multiple/>
+      </div>
+      <input type="submit" value="Validate"/>
+    </form>
+
+
 
     <!-- You can also require other files to run in this process -->
     <script src="./renderer.js"></script>
