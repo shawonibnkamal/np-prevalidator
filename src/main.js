@@ -70,7 +70,8 @@ ipcMain.handle("promise-msg", async (event, args) => {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit()
+  if (process.platform !== 'darwin') app.quit();
+  mainWindow = false;
 })
 
 // In this file you can include the rest of your app's specific main process
