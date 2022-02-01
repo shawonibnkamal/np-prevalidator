@@ -15,15 +15,23 @@
     Chromium <span id="chrome-version"></span>,
     and Electron <span id="electron-version"></span>.
 
+    <div><button id="sendMessage">Send message</button></div>
+    <div id="count"></div>
+
+    <div><button id="getUsage">Get usage</button></div>
+    <div id="usage"></div>
+
     <h1>NP Prevalidator</h1>
     <form id="validateDataForm">
       <div>
         <label>Select metadata csv</label>
-        <input type="file" accept=".csv" id="metadata" name="metadata"/>
+        <button id="metadata">Select data directory</button>
+        <div id="metadataOutput"></div>
       </div>
       <div>
         <label>Select data folder</label>
-        <input type="file" id="dataFolder" name="dataFolder" webkitdirectory directory multiple/>
+        <button id="dataFolder">Select data directory</button>
+        <div id="directoryOutput"></div>
       </div>
       <input type="submit" value="Validate"/>
     </form>

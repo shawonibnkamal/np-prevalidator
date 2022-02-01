@@ -21,8 +21,17 @@ function createWindow () {
   // and load the index.html of the app.
   mainWindow.loadFile('index.html')
 
+  count = 0;
+  setInterval(() => {
+    if (mainWindow) {
+      mainWindow.webContents.send("count", count++);
+    }
+  }, 1000);
+  
+  
+
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
+  mainWindow.webContents.openDevTools()
 }
 
 // This method will be called when Electron has finished
@@ -38,12 +47,24 @@ app.whenReady().then(() => {
   })
 })
 
-ipcMain.on('select-dirs', async (event, arg) => {
+ipcMain.handle("select-dirs", async (event, args) => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openDirectory']
   })
-  console.log('directories selected', result.filePaths)
-})
+  const directory = result.filePaths[0];
+  console.log('directory selected', directory)
+  return directory;
+});
+
+
+ipcMain.on("message", (event, args) => {
+  console.log(args);
+});
+
+ipcMain.handle("promise-msg", async (event, args) => {
+  console.log(args);
+  return process.getCPUUsage();
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

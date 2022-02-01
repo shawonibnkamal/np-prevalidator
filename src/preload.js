@@ -1,7 +1,19 @@
 // All of the Node.js APIs are available in the preload process.
 // It has the same sandbox as a Chrome extension.
 
-const { ipcRenderer } = require('electron')
+const { ipcRenderer, contextBridge } = require('electron')
+
+const API = {
+
+    sendMsg: (msg) => ipcRenderer.send("message", msg),
+    selectDirectory: () => ipcRenderer.invoke("select-dirs"),
+    onCount: (callback) => ipcRenderer.on("count", (event, args) => {
+      callback(args);
+    }),
+    sendPromise: (msg) => ipcRenderer.invoke("promise-msg", msg),
+}
+
+contextBridge.exposeInMainWorld("api", API);
 
 window.addEventListener('DOMContentLoaded', () => {
   const replaceText = (selector, text) => {
@@ -12,12 +24,4 @@ window.addEventListener('DOMContentLoaded', () => {
   for (const type of ['chrome', 'node', 'electron']) {
     replaceText(`${type}-version`, process.versions[type])
   }
-})
-
-process.once('loaded', () => {
-  window.addEventListener('message', evt => {
-    if (evt.data.type === 'select-dirs') {
-      ipcRenderer.send('select-dirs')
-    }
-  })
 })

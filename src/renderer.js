@@ -4,11 +4,37 @@
 // `nodeIntegration` is turned off. Use `preload.js` to
 // selectively enable features needed in the rendering
 // process.
-document.getElementById('dataFolder').addEventListener('click', (event) => {
+let customMessage = "Hello from the rendered";
+
+let count = 0;
+
+window.api.onCount((data) => {
+    count = data;
+    replaceText('count', count);
+});
+
+const replaceText = (selector, text) => {
+    const element = document.getElementById(selector)
+    if (element) element.innerText = text
+}                 
+
+document.getElementById('getUsage').addEventListener('click', async (event) => {
+    event.preventDefault();
+    const data = await  window.api.sendPromise("Hello get cpu usage");
+    console.log(data); 
+});
+
+document.getElementById('sendMessage').addEventListener('click', (event) => {
+    event.preventDefault();
+    console.log("send message");
+    window.api.sendMsg(customMessage);
+    customMessage = "";
+});
+
+document.getElementById('dataFolder').addEventListener('click', async (event) => {
     event.preventDefault()
-    window.postMessage({
-        type: 'select-dirs'
-    });
+    const directory = await window.api.selectDirectory();
+    replaceText('directoryOutput', "Directory selected: "+directory)
 });
 
 document.querySelector('#validateDataForm').addEventListener('submit', submitForm);
