@@ -27,5 +27,6 @@
     "appId": "naturespalette.prevalidator"
   },
   "dependencies": {
+    "danfojs-node": "^1.0.2"
   }
 }
