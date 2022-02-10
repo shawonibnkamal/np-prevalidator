@@ -1,0 +1,2 @@
+FileName,DataSource,UniqueID,institutionCode,collectionCode,catalogueNumber,class,order,family,genus,specificEpithet,infraspecificEpithet,sex,lifeStage,country,locality,decimalLatitude,decimalLongitude,geodeticDatum,verbatimElevation,eventDate,measurementDeterminedDate,Patch,LightAngle1,LightAngle2,ProbeAngle1,ProbeAngle2,Replicate,Comments,field30
+24047BEL_Splice17_1.txt,M,,Museums Victoria,,24047,,Accipitriformes,Accipitridae,Hamirostra,melanosternon,,unknown,adult,Australia,Swan Hill,-35.33,143.55,,,U,1931-03-16,belly,45,0,45,0,1,,

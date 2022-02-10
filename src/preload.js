@@ -10,6 +10,8 @@ const API = {
     onCount: (callback) => ipcRenderer.on("count", (event, args) => {
       callback(args);
     }),
+    exportDataFiles: () => {ipcRenderer.send("exportDataFiles")},
+    exportMetaFile: () => {ipcRenderer.send("exportMetaFile")},
 }
 
 contextBridge.exposeInMainWorld("api", API);

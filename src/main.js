@@ -19,10 +19,10 @@ function createWindow () {
   })
 
   // and load the index.html of the app.
-  mainWindow.loadFile('./views/index.html')
+  mainWindow.loadFile('./views/html/index.html')
 
   // dev
-  validationController.selectValidate();
+  // validationController.selectValidate();
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools()
@@ -50,6 +50,8 @@ app.on('window-all-closed', function () {
 ipcMain.handle("selectMeta", validationController.selectMeta);
 ipcMain.handle("selectDir", validationController.selectDirectory);
 ipcMain.handle("validate", validationController.selectValidate);
+ipcMain.on("exportDataFiles", validationController.exportDataFiles);
+ipcMain.on("exportMetaFile", validationController.exportMetaFile);
 // index.html controllers end ==================================
 
 
