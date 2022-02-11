@@ -9,6 +9,7 @@ const {json2csv} = require('json-2-csv');
 let metaFilePath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/metadata.csv"; // Directory of meta file csv
 let directoryPath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/RankinData"; // Direction of data files folder
 let matchedMeta = []
+let filesMap = new Map()
 
 exports.selectMeta = async (event, args) => {
     const result = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
@@ -29,6 +30,24 @@ exports.selectDirectory = async (event, args) => {
     return directoryPath;
 }
 
+const getAllFiles = async function(dirPath, filesMap) {
+    return new Promise((resolve, reject) => {
+        files = fs.readdirSync(dirPath)
+
+        filesMap = filesMap || new Map()
+    
+        files.forEach(function(file) {
+            if (fs.statSync(dirPath + "/" + file).isDirectory()) {
+                filesMap = getAllFiles(dirPath + "/" + file, filesMap)
+            } else {
+                filesMap.set(file, path.join(dirPath, "/", file));
+            }
+        })
+    
+        resolve(filesMap)
+    })
+}
+
 exports.selectValidate = async (event, args) => {
     console.log("validate pressed");
     if (!metaFilePath || !directoryPath) {
@@ -37,23 +56,49 @@ exports.selectValidate = async (event, args) => {
     }
         
     // Read datafile names from directory
-    const files = await fs.promises.readdir(directoryPath)
+    filesMap = await getAllFiles(directoryPath)
+    //console.log(filesMap)
     
     const meta = await csv().fromFile(metaFilePath);
 
     for (let i=0; i < meta.length; i++) {
-        if (files.includes(meta[i]['FileName'])) {
+        if (filesMap.has(meta[i]['FileName'])) {
             matchedMeta.push(meta[i])
         }
     }
 
     console.log(matchedMeta)
     
-    
 
     // Check filenames matched
     BrowserWindow.getFocusedWindow().loadFile('./views/html/result.html');
     return "Validating...";
+}
+
+
+exports.exportMetaFile = async (event, args) => {
+    console.log("Export meta clicked")
+    let file = await dialog.showSaveDialog({
+        title: 'Select the File Path to save',
+        defaultPath: path.join(__dirname, '/metafile.csv'),
+        buttonLabel: 'Save',
+        // Restricting the user to only Text Files.
+        filters: [{
+            name: 'CSV File',
+            extensions: ['csv']
+        }],
+        properties: []
+    });
+    
+    // Download csv
+    json2csv(matchedMeta, (err, csvOutput) => {
+        if (err) {
+            throw err;
+        }
+    
+        // write csvOutput to a file
+        fs.writeFileSync(path.join(file.filePath.toString()), csvOutput);
+    });
 }
 
 exports.exportDataFiles = async (event, args) => {
@@ -82,7 +127,8 @@ exports.exportDataFiles = async (event, args) => {
         archive.pipe(stream);
         // append files
         for(let i = 0; i < matchedMeta.length; i++) {
-            archive.file(path.join(directoryPath, matchedMeta[i]['FileName']), {name: matchedMeta[i]['FileName']});
+            console.log(filesMap.get(matchedMeta[i]['FileName']))
+            archive.file(filesMap.get(matchedMeta[i]['FileName']), {name: matchedMeta[i]['FileName']});
         }
         archive.on('error', err => {throw err;});
         archive.finalize();
@@ -92,30 +138,5 @@ exports.exportDataFiles = async (event, args) => {
         console.log(`zipped ${archive.pointer()} total bytes.`);
         resolve();
         });
-    });
-}
-
-exports.exportMetaFile = async (event, args) => {
-    console.log("Export meta clicked")
-    let file = await dialog.showSaveDialog({
-        title: 'Select the File Path to save',
-        defaultPath: path.join(__dirname, '/metafile.csv'),
-        buttonLabel: 'Save',
-        // Restricting the user to only Text Files.
-        filters: [{
-            name: 'CSV File',
-            extensions: ['csv']
-        }],
-        properties: []
-    });
-    
-    // Download csv
-    json2csv(matchedMeta, (err, csvOutput) => {
-        if (err) {
-            throw err;
-        }
-    
-        // write csvOutput to a file
-        fs.writeFileSync(path.join(file.filePath.toString()), csvOutput);
     });
 }
