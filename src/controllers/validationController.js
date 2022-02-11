@@ -3,8 +3,9 @@ const fs=require('fs');
 const {parse} = require('csv-parse')
 const archiver = require('archiver');
 const path = require('path');
-const csv = require("csvtojson");
+const csvtojson = require("csvtojson");
 const {json2csv} = require('json-2-csv');
+const { match } = require('assert');
 
 let metaFilePath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/metadata.csv"; // Directory of meta file csv
 let directoryPath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/RankinData"; // Direction of data files folder
@@ -59,7 +60,7 @@ exports.selectValidate = async (event, args) => {
     filesMap = await getAllFiles(directoryPath)
     //console.log(filesMap)
     
-    const meta = await csv().fromFile(metaFilePath);
+    const meta = await csvtojson().fromFile(metaFilePath);
 
     for (let i=0; i < meta.length; i++) {
         if (filesMap.has(meta[i]['FileName'])) {
@@ -72,6 +73,14 @@ exports.selectValidate = async (event, args) => {
 
     // Check filenames matched
     BrowserWindow.getFocusedWindow().loadFile('./views/html/result.html');
+    BrowserWindow.getFocusedWindow().once('ready-to-show', () => {
+        BrowserWindow.getFocusedWindow().webContents.send("showValidationResult", {
+            numMatched: matchedMeta.length,
+            unmatchedMeta: meta.length - matchedMeta.length,
+            unmatchedFiles: filesMap.size - matchedMeta.length
+        })
+    })
+    
     return "Validating...";
 }
 

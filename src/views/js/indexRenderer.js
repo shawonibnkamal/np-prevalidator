@@ -4,12 +4,6 @@
 // `nodeIntegration` is turned off. Use `preload.js` to
 // selectively enable features needed in the rendering
 // process.
-let count = 0;
-window.api.onCount((data) => {
-    count = data;
-    replaceText('count', count);
-});
-
 const replaceText = (selector, text) => {
     const element = document.getElementById(selector)
     if (element) element.innerText = text
