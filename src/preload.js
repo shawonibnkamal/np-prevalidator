@@ -8,11 +8,13 @@ const API = {
     selectDirectory: () => ipcRenderer.invoke("selectDir"),
     selectSource: (source) => ipcRenderer.send("selectSource", source),
     validate: () => ipcRenderer.invoke("validate"),
-    exportDataFiles: () => {ipcRenderer.send("exportDataFiles")},
-    exportMetaFile: () => {ipcRenderer.send("exportMetaFile")},
+    exportValidatedDataFiles: () => {ipcRenderer.send("exportValidatedDataFiles")},
+    exportValidatedMetaFile: () => {ipcRenderer.send("exportValidatedMetaFile")},
     showValidationResult: (callback) => ipcRenderer.on("showValidationResult", (event, args) => {
       callback(args);
     }),
+    exportUnmatchedMeta: () => {ipcRenderer.send("exportUnmatchedMeta")},
+    exportUnmatchedDataFiles: () => {ipcRenderer.send("exportUnmatchedDataFiles")},
 }
 
 contextBridge.exposeInMainWorld("api", API);

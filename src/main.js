@@ -51,8 +51,10 @@ ipcMain.handle("selectMeta", validationController.selectMeta);
 ipcMain.handle("selectDir", validationController.selectDirectory);
 ipcMain.on("selectSource", validationController.selectSource);
 ipcMain.handle("validate", validationController.selectValidate);
-ipcMain.on("exportDataFiles", validationController.exportDataFiles);
-ipcMain.on("exportMetaFile", validationController.exportMetaFile);
+ipcMain.on("exportValidatedDataFiles", validationController.exportValidatedDataFiles);
+ipcMain.on("exportValidatedMetaFile", validationController.exportValidatedMetaFile);
+ipcMain.on("exportUnmatchedMeta", validationController.exportUnmatchedMeta);
+ipcMain.on("exportUnmatchedDataFiles", validationController.exportUnmatchedDataFiles);
 // index.html controllers end ==================================
 
 
