@@ -49,6 +49,7 @@ app.on('window-all-closed', function () {
 // index.html controllers start ==================================
 ipcMain.handle("selectMeta", validationController.selectMeta);
 ipcMain.handle("selectDir", validationController.selectDirectory);
+ipcMain.on("selectSource", validationController.selectSource);
 ipcMain.handle("validate", validationController.selectValidate);
 ipcMain.on("exportDataFiles", validationController.exportDataFiles);
 ipcMain.on("exportMetaFile", validationController.exportMetaFile);

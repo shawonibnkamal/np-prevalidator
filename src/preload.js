@@ -6,6 +6,7 @@ const { ipcRenderer, contextBridge } = require('electron')
 const API = {
     selectMeta: () => ipcRenderer.invoke("selectMeta"),
     selectDirectory: () => ipcRenderer.invoke("selectDir"),
+    selectSource: (source) => ipcRenderer.send("selectSource", source),
     validate: () => ipcRenderer.invoke("validate"),
     exportDataFiles: () => {ipcRenderer.send("exportDataFiles")},
     exportMetaFile: () => {ipcRenderer.send("exportMetaFile")},

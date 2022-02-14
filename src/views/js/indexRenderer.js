@@ -25,6 +25,13 @@ document.getElementById('dataFolder').addEventListener('click', async (event) =>
     replaceText('directoryOutput', "Directory selected: "+directory);
 });
 
+// Handler for selecting source
+document.getElementById('selectSource').addEventListener('change', async (event) => {
+    event.preventDefault();
+    const source = document.getElementById('selectSource').value;
+    window.api.selectSource(source);
+});
+
 // Handler for validate button
 document.getElementById('validate').addEventListener('click', async (event) => {
     event.preventDefault();

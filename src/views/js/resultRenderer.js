@@ -14,14 +14,17 @@ document.getElementById('exportDataFiles').addEventListener('click', async (even
 
 // Show validation result
 window.api.showValidationResult((data) => {
-    console.log(data)
-
-    text = `
+    console.log(data);
+    let text = "";
+    if (data.missingHeaderFields.length > 0) {
+        text += `Missing required header fields: ${data.missingHeaderFields}<br>`;
+    }
+    text += `
         Number of matched files/meta: ${data.numMatched}<br>
         Number of files without matches: ${data.unmatchedFiles}<br>
         Number of meta without matches: ${data.unmatchedMeta}
-    `
+    `;
 
-    const element = document.getElementById("resultMessage")
-    element.innerHTML = text
+    const element = document.getElementById("resultMessage");
+    element.innerHTML = text;
 });

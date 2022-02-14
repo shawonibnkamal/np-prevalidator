@@ -7,8 +7,37 @@ const csvtojson = require("csvtojson");
 const {json2csv} = require('json-2-csv');
 const { match } = require('assert');
 
+const reflectance_museum_header_fields = [
+    "filename",
+    "institutioncode",
+    "cataloguenumber",
+    "genus",
+    "specificepithet",
+    "patch",
+    "lightangle1",
+    "lightangle2",
+    "probeangle1",
+    "probeangle2",
+    "replicate"
+];
+  
+const reflectance_field_header_fields = [
+    "filename",
+    "uniqueid",
+    "genus",
+    "specificepithet",
+    "patch",
+    "lightangle1",
+    "lightangle2",
+    "probeangle1",
+    "probeangle2",
+    "replicate"
+];
+
 let metaFilePath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/metadata.csv"; // Directory of meta file csv
 let directoryPath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/RankinData"; // Direction of data files folder
+let dataSource = "field";
+let meta = [];
 let matchedMeta = []
 let filesMap = new Map()
 
@@ -31,6 +60,10 @@ exports.selectDirectory = async (event, args) => {
     return directoryPath;
 }
 
+exports.selectSource = async (event, args) => {
+    dataSource = args;
+}
+
 const getAllFiles = async function(dirPath, filesMap) {
     return new Promise((resolve, reject) => {
         files = fs.readdirSync(dirPath)
@@ -49,6 +82,29 @@ const getAllFiles = async function(dirPath, filesMap) {
     })
 }
 
+const verifyMetaFileHeaderFields = function () {
+    // verify if each column is existing
+    let metaFileHeaderFields = Object.keys(meta[0]);
+    console.log(metaFileHeaderFields);
+    
+    for (let i=0; i < metaFileHeaderFields.length; i++) {
+        metaFileHeaderFields[i] = metaFileHeaderFields[i].toLowerCase().trim();
+    }
+    
+    var reference_header_fields = dataSource.toLowerCase() == "field"? reflectance_field_header_fields : reflectance_museum_header_fields;
+  
+    let missingColumns = [];
+    
+    for(var i =0;i<reference_header_fields.length;i++){
+      // check = meta_file_obj_arr[i].replace(/\s/g, "");
+      if(!metaFileHeaderFields.includes(reference_header_fields[i])){
+        missingColumns.push(reference_header_fields[i]);
+      }
+    }
+    
+    return missingColumns;
+}
+
 exports.selectValidate = async (event, args) => {
     console.log("validate pressed");
     if (!metaFilePath || !directoryPath) {
@@ -58,23 +114,32 @@ exports.selectValidate = async (event, args) => {
         
     // Read datafile names from directory
     filesMap = await getAllFiles(directoryPath)
-    //console.log(filesMap)
-    
-    const meta = await csvtojson().fromFile(metaFilePath);
+    // Read meta from csv
+    meta = await csvtojson().fromFile(metaFilePath)
+    .preFileLine((fileLine,idx)=>{
+        if (idx === 0 ) {
+            return fileLine.toLowerCase(); // set header fields to lower case
+        } else {
+            return fileLine;
+        }
+    });
 
+    // Check if header files are present in meta
+    let missingHeaderFields = verifyMetaFileHeaderFields();
+
+    // Get matchedMeta
     for (let i=0; i < meta.length; i++) {
-        if (filesMap.has(meta[i]['FileName'])) {
+        if (filesMap.has(meta[i]['filename'])) {
             matchedMeta.push(meta[i])
         }
     }
-
-    console.log(matchedMeta)
     
 
     // Check filenames matched
     BrowserWindow.getFocusedWindow().loadFile('./views/html/result.html');
     BrowserWindow.getFocusedWindow().once('ready-to-show', () => {
         BrowserWindow.getFocusedWindow().webContents.send("showValidationResult", {
+            missingHeaderFields: missingHeaderFields,
             numMatched: matchedMeta.length,
             unmatchedMeta: meta.length - matchedMeta.length,
             unmatchedFiles: filesMap.size - matchedMeta.length
@@ -136,8 +201,8 @@ exports.exportDataFiles = async (event, args) => {
         archive.pipe(stream);
         // append files
         for(let i = 0; i < matchedMeta.length; i++) {
-            console.log(filesMap.get(matchedMeta[i]['FileName']))
-            archive.file(filesMap.get(matchedMeta[i]['FileName']), {name: matchedMeta[i]['FileName']});
+            console.log(filesMap.get(matchedMeta[i]['filename']))
+            archive.file(filesMap.get(matchedMeta[i]['filename']), {name: matchedMeta[i]['filename']});
         }
         archive.on('error', err => {throw err;});
         archive.finalize();
