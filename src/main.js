@@ -7,8 +7,8 @@ let mainWindow; // BrowserWindow
 function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 768,
+    width: 600,
+    height: 500,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -21,11 +21,8 @@ function createWindow () {
   // and load the index.html of the app.
   mainWindow.loadFile('./views/html/index.html')
 
-  // dev
-  // validationController.selectValidate();
-
   // Open the DevTools.
-  mainWindow.webContents.openDevTools()
+  //mainWindow.webContents.openDevTools()
 }
 
 // This method will be called when Electron has finished

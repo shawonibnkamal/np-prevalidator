@@ -5,7 +5,7 @@ const archiver = require('archiver');
 const path = require('path');
 const csvtojson = require("csvtojson");
 const {json2csv} = require('json-2-csv');
-const { match } = require('assert');
+const { performance } = require('perf_hooks');
 
 const reflectance_museum_header_fields = [
     "filename",
@@ -154,7 +154,6 @@ const similarStrings = function(s1, s2) {
     }
     return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
 }
-console.log(similarStrings("potato", "Pot_ato"));
 
 // Handler after selecting validate button
 exports.selectValidate = async (event, args) => {
@@ -196,7 +195,7 @@ exports.selectValidate = async (event, args) => {
             
         } else {
             // No matches found
-            unmatchedMeta.push(meta[i]);
+            unmatchedMeta.push({filename: meta[i]['filename'], similarFiles: ""});
         }
     }
 
@@ -285,8 +284,19 @@ exports.exportValidatedDataFiles = async (event, args) => {
     });
 }
 
+const compare = function(a, b) {
+    if ( a.similarity < b.similarity ){
+        return 1;
+    }
+    if ( a.similarity > b.similarity ){
+        return -1;
+    }
+    return 0;
+}
+
 // Export unmatched meta file with similar filenames
 exports.exportUnmatchedMeta = async (event, args) => {
+    let startTime = performance.now();
     console.log("Export unmatched meta clicked")
     let file = await dialog.showSaveDialog({
         title: 'Select the File Path to save',
@@ -299,7 +309,25 @@ exports.exportUnmatchedMeta = async (event, args) => {
         }],
         properties: []
     });
-    
+
+    for (let i = 0; i < unmatchedMeta.length; i++) {
+        let unmatchedMetaFilename = unmatchedMeta[i]['filename'];
+        let similarFilesList = [];
+        filesMap.forEach((value, key, map) => {
+            let similarity = similarStrings(unmatchedMetaFilename, key);
+            if (similarity > 0.75) {
+                similarFilesList.push({filename: key, similarity: similarity});
+            }
+        });
+        similarFilesList.sort(compare);
+        let similarFilesListLength = similarFilesList.length;
+        if (similarFilesListLength > 7) {
+            similarFilesListLength = 7;
+        }
+        for (let j = 0; j < similarFilesListLength; j++) {
+            unmatchedMeta[i]['similarFiles'] += `${similarFilesList[j]['filename']}\n`;
+        }
+    }
 
     // Download csv
     json2csv(unmatchedMeta, (err, csvOutput) => {
@@ -310,6 +338,8 @@ exports.exportUnmatchedMeta = async (event, args) => {
         // write csvOutput to a file
         fs.writeFileSync(path.join(file.filePath.toString()), csvOutput);
     });
+    let endTime = performance.now();
+    console.log(`Finished exporting unmatched_metafile in ${endTime - startTime} milliseconds`)
 }
 
 // Export unmatched data file with similar meta
