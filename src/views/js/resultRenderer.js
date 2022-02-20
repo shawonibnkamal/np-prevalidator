@@ -3,16 +3,31 @@ window.api.showValidationResult((data) => {
     console.log(data);
     let text = "";
     text += `
-    <div class="form-group">
-        Number of matched files/meta: ${data.numMatched}<br>
-        <button id="exportValidatedMetaFile" class="btn btn-default">Export validated meta</button> 
-        <button id="exportValidatedDataFiles" class="btn btn-default">Export validated datafiles</button>
-    </div>
+    <ul class="list-group">
+        <h3><li class="list-group-header">Validated files</li></h3>
+        <li class="list-group-item">
+            ${data.numMatched > 0 ? 
+            `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
+            : 
+            `<span class="icon icon-record color-red media-object pull-left font-20"></span>`
+            }
+            <div class="form-group">
+                ${data.numMatched > 0 ? 
+                `Number of matched files/meta: ${data.numMatched}<br>
+                <button id="exportValidatedMetaFile" class="btn btn-default">Export validated meta</button> 
+                <button id="exportValidatedDataFiles" class="btn btn-default">Export validated datafiles</button>
+                `
+                :
+                `No matched files was found.`
+                }
+            </div>
+        </li>
+    </ul>
     `;
 
     text += `<ul class="list-group">`;
     
-
+    text += `<h3><li class="list-group-header">Validation checks</li></h3>`
 
     text += `
     <li class="list-group-item">
