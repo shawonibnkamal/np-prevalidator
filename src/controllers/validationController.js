@@ -42,7 +42,7 @@ let filesMap = new Map(); // List of files from directory filename:path
 let meta = []; // List of all meta
 let matchedMeta = []; // List of meta with filenames matched
 let unmatchedMeta = []; // List of meta without filenames matched
-let duplicateFilenamesInMeta = []; // List of meta with duplicate filenames
+let duplicateFilenamesInMeta = new Set(); // List of meta with duplicate filenames
 
 
 // Handler after selecting meta button
@@ -187,7 +187,7 @@ exports.selectValidate = async (event, args) => {
 
             // Check for duplicates
             if (filesMapValue[1] == true) {
-                duplicateFilenamesInMeta.push(meta[i]);
+                duplicateFilenamesInMeta.add(meta[i]['filename']);
             } else {
                 matchedMeta.push(meta[i]);
                 filesMap.set(meta[i]['filename'], [filesMapValue[0], true]);
@@ -199,18 +199,15 @@ exports.selectValidate = async (event, args) => {
         }
     }
 
-    for(let i=0; i < unmatchedMeta.length; i++) {
-        
-    }
-
     // Show results
     BrowserWindow.getFocusedWindow().loadFile('./views/html/result.html');
     BrowserWindow.getFocusedWindow().once('ready-to-show', () => {
         BrowserWindow.getFocusedWindow().webContents.send("showValidationResult", {
-            missingHeaderFields: missingHeaderFields,
             numMatched: matchedMeta.length,
+            missingHeaderFields: missingHeaderFields,
             unmatchedMeta: meta.length - matchedMeta.length,
-            unmatchedFiles: filesMap.size - matchedMeta.length
+            unmatchedFiles: filesMap.size - matchedMeta.length,
+            duplicateFilenamesInMeta: duplicateFilenamesInMeta.size
         })
     })
     
@@ -337,13 +334,16 @@ exports.exportUnmatchedMeta = async (event, args) => {
     
         // write csvOutput to a file
         fs.writeFileSync(path.join(file.filePath.toString()), csvOutput);
+
+        let endTime = performance.now();
+        console.log(`Finished exporting unmatched_metafile in ${endTime - startTime} milliseconds`);
     });
-    let endTime = performance.now();
-    console.log(`Finished exporting unmatched_metafile in ${endTime - startTime} milliseconds`)
+    
 }
 
 // Export unmatched data file with similar meta
 exports.exportUnmatchedDataFiles = async (event, args) => {
+    let startTime = performance.now();
     console.log("Export unmatched meta clicked")
     let file = await dialog.showSaveDialog({
         title: 'Select the File Path to save',
@@ -357,17 +357,72 @@ exports.exportUnmatchedDataFiles = async (event, args) => {
         properties: []
     });
     
-    let result = [];
+    let unmatchedFilesList = [];
     for (const [key, value] of filesMap.entries()) {
         if (value[1] == false) {
-            result.push({
-                filename: key
+            unmatchedFilesList.push({
+                filename: key,
+                similarMeta: ""
             });
         }
     }
 
+    for (let i = 0; i < unmatchedFilesList.length; i++) {
+        let unmatchedFilename = unmatchedFilesList[i]['filename'];
+        let similarMetaList = [];
+        for (let j = 0; j < meta.length; j++) {
+            let similarity = similarStrings(unmatchedFilename, meta[j]['filename']);
+            if (similarity > 0.75) {
+                similarMetaList.push({filename: meta[j]['filename'], similarity: similarity});
+            }
+        }
+        similarMetaList.sort(compare);
+        let similarMetaListLength = similarMetaList.length;
+        if (similarMetaListLength > 7) {
+            similarMetaListLength = 7;
+        }
+        for (let j = 0; j < similarMetaListLength; j++) {
+            unmatchedFilesList[i]['similarMeta'] += `${similarMetaList[j]['filename']}\n`;
+        }
+    }
+
     // Download csv
-    json2csv(result, (err, csvOutput) => {
+    json2csv(unmatchedFilesList, (err, csvOutput) => {
+        if (err) {
+            throw err;
+        }
+    
+        // write csvOutput to a file
+        fs.writeFileSync(path.join(file.filePath.toString()), csvOutput);
+        
+        let endTime = performance.now();
+        console.log(`Finished exporting unmatched_datafile in ${endTime - startTime} milliseconds`)
+    });
+    
+}
+
+// Controller for exporting duplicate filenames in meta
+exports.exportDuplicateFilenamesInMeta = async (event, args) => {
+    console.log("Export duplicate filename clicked")
+    let file = await dialog.showSaveDialog({
+        title: 'Select the File Path to save',
+        defaultPath: path.join(__dirname, '/duplicate.csv'),
+        buttonLabel: 'Save',
+        // Restricting the user to only Text Files.
+        filters: [{
+            name: 'CSV File',
+            extensions: ['csv']
+        }],
+        properties: []
+    });
+
+    let duplicateFilenamesInMetaArray = [];
+    for (let [key, value] of duplicateFilenamesInMeta.entries()) {
+        duplicateFilenamesInMetaArray.push({"filename": key})
+    }
+
+    // Download csv
+    json2csv(duplicateFilenamesInMetaArray, (err, csvOutput) => {
         if (err) {
             throw err;
         }

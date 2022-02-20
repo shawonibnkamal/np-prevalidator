@@ -52,6 +52,7 @@ ipcMain.on("exportValidatedDataFiles", validationController.exportValidatedDataF
 ipcMain.on("exportValidatedMetaFile", validationController.exportValidatedMetaFile);
 ipcMain.on("exportUnmatchedMeta", validationController.exportUnmatchedMeta);
 ipcMain.on("exportUnmatchedDataFiles", validationController.exportUnmatchedDataFiles);
+ipcMain.on("exportDuplicateFilenamesInMeta", validationController.exportDuplicateFilenamesInMeta);
 // index.html controllers end ==================================
 
 

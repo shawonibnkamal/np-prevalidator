@@ -15,6 +15,7 @@ const API = {
     }),
     exportUnmatchedMeta: () => {ipcRenderer.send("exportUnmatchedMeta")},
     exportUnmatchedDataFiles: () => {ipcRenderer.send("exportUnmatchedDataFiles")},
+    exportDuplicateFilenamesInMeta: () => {ipcRenderer.send("exportDuplicateFilenamesInMeta")}
 }
 
 contextBridge.exposeInMainWorld("api", API);
