@@ -8,8 +8,7 @@ const API = {
     selectDirectory: () => ipcRenderer.invoke("selectDir"),
     selectSource: (source) => ipcRenderer.send("selectSource", source),
     validate: () => ipcRenderer.invoke("validate"),
-    exportValidatedDataFiles: () => {ipcRenderer.send("exportValidatedDataFiles")},
-    exportValidatedMetaFile: () => {ipcRenderer.send("exportValidatedMetaFile")},
+    exportValidatedFiles: () => {ipcRenderer.send("exportValidatedFiles")},
     showValidationResult: (callback) => ipcRenderer.on("showValidationResult", (event, args) => {
       callback(args);
     }),

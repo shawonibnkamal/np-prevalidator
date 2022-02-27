@@ -215,10 +215,10 @@ exports.selectValidate = async (event, args) => {
 }
 
 // Handler after selecting export meta file button
-exports.exportValidatedMetaFile = async (event, args) => {
-    console.log("Export meta clicked")
-    let file = await dialog.showSaveDialog({
-        title: 'Select the File Path to save',
+exports.exportValidatedFiles = async (event, args) => {
+    console.log("Export validated clicked")
+    let metadatafile = await dialog.showSaveDialog({
+        title: 'Input the meta data filename',
         defaultPath: path.join(__dirname, '/metafile.csv'),
         buttonLabel: 'Save',
         // Restricting the user to only Text Files.
@@ -236,16 +236,12 @@ exports.exportValidatedMetaFile = async (event, args) => {
         }
     
         // write csvOutput to a file
-        fs.writeFileSync(path.join(file.filePath.toString()), csvOutput);
+        fs.writeFileSync(path.join(metadatafile.filePath.toString()), csvOutput);
     });
-}
 
-// Handler after selecting export data file button
-exports.exportValidatedDataFiles = async (event, args) => {
-    console.log("Export clicked")
-    let file = await dialog.showSaveDialog({
-        title: 'Select the File Path to save',
-        defaultPath: path.join(__dirname, '/dataset.zip'),
+    let rawdatafiles = await dialog.showSaveDialog({
+        title: 'Input the raw data filename',
+        defaultPath: path.join(__dirname, '/rawdataset.zip'),
         buttonLabel: 'Save',
         // Restricting the user to only Text Files.
         filters: [{
@@ -256,7 +252,7 @@ exports.exportValidatedDataFiles = async (event, args) => {
     });
     
     // Zip data files
-    var stream = fs.createWriteStream(path.join(file.filePath.toString()));
+    var stream = fs.createWriteStream(path.join(rawdatafiles.filePath.toString()));
     const archive = archiver('zip', { zlib: { level: 9 } });
 
     archive.on('error', function(err) {
