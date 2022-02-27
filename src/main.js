@@ -14,7 +14,8 @@ function createWindow () {
       nodeIntegration: false,
       enableRemoteModule: false,
       contextIsolation: true,
-      sandbox: true
+      sandbox: true,
+      autoHideMenuBar: true,
     }
   })
 
