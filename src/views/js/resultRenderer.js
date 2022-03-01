@@ -2,101 +2,174 @@
 window.api.showValidationResult((data) => {
     console.log(data);
     let text = "";
-    // Validation checks
-    text += `<ul class="list-group">`;
-    
-    text += `<h3><li class="list-group-header">Validation checks</li></h3>`
+    // Validation checks    
+    text += `
+    <h3>Validation checks</h3>
+    <table class="table-striped">
+    <thead>
+    <th>Issues</th>
+    <th>Actions</th>
+    </thead>`
 
     text += `
-    <li class="list-group-item">
-        ${data.missingHeaderFields.length > 0 ? 
-        `<span class="icon icon-record color-red media-object pull-left font-20"></span>`
-        : 
-        `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
-        }
-
-        <div class="media-body"> 
-            <strong>Meta Headers</strong>
-            <p>   
+    <tr>
+        <td>
             ${data.missingHeaderFields.length > 0 ? 
-                `Missing required header fields: ` + data.missingHeaderFields 
+            `<span class="icon icon-record color-red media-object pull-left font-20"></span>`
             : 
-                `Metadata contains all the required headers.`
+            `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
             }
-            </p>
-        </div>
-    </li>
+
+            <div> 
+                <strong>Metadata Headers</strong>
+                <div>   
+                ${data.missingHeaderFields.length > 0 ? 
+                    `Missing required headers: ` + data.missingHeaderFields 
+                : 
+                    `Metadata contains all the required headers.`
+                }
+                </div>
+            </div>
+        </td>
+        <td>
+        </td>
+    </tr>
     `;
 
     text += `
-    <li class="list-group-item">
-        ${data.duplicateFilenamesInMeta > 0 ? 
-        `<span class="icon icon-record color-red media-object pull-left font-20"></span>`
-        : 
-        `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
-        }
-        <div class="media-body"> 
-            <strong>Duplicate filenames in meta</strong>
-            <p>
-                ${data.unmatchedFiles > 0 ?
-                    `Number of duplicate filenames in meta: ${data.duplicateFilenamesInMeta}<br>
-                    <button id="exportDuplicateFilenamesInMeta" class="btn btn-default">Export duplicate filenames in meta</button>`
-                :
-                    `There are no duplicate filenames in meta.`
+    <tr>
+        <td>
+            ${data.missingFields.length > 0 ? 
+            `<span class="icon icon-record color-red media-object pull-left font-20"></span>`
+            : 
+            `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
+            }
+
+            <div> 
+                <strong>Metadata Fields</strong>
+                <div>   
+                ${data.missingFields.length > 0 ? 
+                    `Missing required fields in metadata: ` + data.missingFields 
+                : 
+                    `Metadata contains all the required fields.`
                 }
-            </p>
-        </div>
-    </li>
+                </div>
+            </div>
+        </td>
+        <td>
+            ${data.missingFields > 0 ?
+                `
+                <button class="btn btn-default"><span class="icon icon-export icon-text"></span> Export issues in csv</button>
+                `
+                :
+                ``
+            }
+        </td>
+    </tr>
+    `;
+
+    text += `
+    <tr>
+        <td>
+            ${data.duplicateFilenamesInMeta > 0 ? 
+            `<span class="icon icon-record color-red media-object pull-left font-20"></span>`
+            : 
+            `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
+            }
+            <div> 
+                <strong>Duplicate filenames in metadata</strong>
+                <div>
+                    ${data.duplicateFilenamesInMeta > 0 ?
+                        `Number of duplicate filenames in metadata: ${data.duplicateFilenamesInMeta}`
+                    :
+                        `There are no duplicate filenames in metadata.`
+                    }
+                </div>
+            </div>
+        </td>
+        <td> 
+            ${data.duplicateFilenamesInMeta > 0 ?
+                `
+                <button id="exportDuplicateFilenamesInMeta" class="btn btn-default"><span class="icon icon-export icon-text"></span>  Export issues in csv</button>
+                `
+                :
+                ``
+            }
+        </td>
+    </tr>
     `;
 
     
     text += `
-    <li class="list-group-item">
-        ${data.unmatchedMeta > 0 ? 
-        `<span class="icon icon-record color-red media-object pull-left font-20"></span>`
-        : 
-        `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
-        }
-        <div class="media-body"> 
-            <strong>Metadata rows without matches</strong>
-            <p>
-                ${data.unmatchedMeta > 0 ?
-                    `Number of metadata rows without matches: ` + data.unmatchedMeta + `<br>
-                    <button id="exportUnmatchedMeta" class="btn btn-default">Export unmatched meta</button>`
+    <tr>
+        <td>
+            ${data.unmatchedMeta > 0 ? 
+            `<span class="icon icon-record color-red media-object pull-left font-20"></span>`
+            : 
+            `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
+            }
+            <div> 
+                <strong>Metadata rows without matches</strong>
+                <div>
+                    ${data.unmatchedMeta > 0 ?
+                        `Number of metadata rows without matches: ` + data.unmatchedMeta
+                    :
+                        `All metadata rows contains valid a filename.`
+                    }
+                </div>
+            </div>
+        </td>
+        <td>
+            ${data.unmatchedMeta > 0 ?
+                `
+                <button class="btn btn-default"><span class="icon icon-tools icon-text"></span> Fix issues</button>
+                <button id="exportUnmatchedMeta" class="btn btn-default"><span class="icon icon-export icon-text"></span> Export issues in csv</button>
+                `
                 :
-                    `All metarows contains valid a filename.`
-                }
-            </p>
-        </div>
-    </li>
+                ``
+            }
+        </td>
+    </tr>
     `;
     
 
     text += `
-    <li class="list-group-item">
-        ${data.unmatchedFiles > 0 ? 
-        `<span class="icon icon-record color-red media-object pull-left font-20"></span>`
-        : 
-        `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
-        }
-        <div class="media-body"> 
-            <strong>Raw data files without matches</strong>
-            <p>
-                ${data.unmatchedFiles > 0 ?
-                    `Number of raw data files without matches: ${data.unmatchedFiles}<br>
-                    <button id="exportUnmatchedDataFiles" class="btn btn-default">Export unmatched files</button>`
+    <tr>
+        <td>
+            ${data.unmatchedFiles > 0 ? 
+            `<span class="icon icon-record color-red media-object pull-left font-20"></span>`
+            : 
+            `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
+            }
+            <div> 
+                <strong>Raw data files without matches</strong>
+                <div>
+                    ${data.unmatchedFiles > 0 ?
+                        `Number of raw data files without matches: ${data.unmatchedFiles}<br>`
+                    :
+                        `All files has a valid match.`
+                    }
+                </div>
+            </div>
+        </td>
+        <td>
+            ${data.unmatchedFiles > 0 ?
+                `
+                <button class="btn btn-default"><span class="icon icon-tools icon-text"></span> Fix issues</button>
+                <button id="exportUnmatchedDataFiles" class="btn btn-default"><span class="icon icon-export icon-text"></span> Export issues in csv</button>
+                `
                 :
-                    `All files has a valid match.`
-                }
-            </p>
-        </div>
-    </li>
+                ``
+            }
+        </td>
+    </tr>
     `;
 
-    text += `</ul>`;
+    text += `</table>`;
 
     // Validated files
     text += `
+    <br><br>
     <ul class="list-group">
         <h3><li class="list-group-header">Validated files</li></h3>
         <li class="list-group-item">
@@ -108,7 +181,7 @@ window.api.showValidationResult((data) => {
             <div class="form-group">
                 ${data.numMatched > 0 ? 
                 `Number of matched files/meta: ${data.numMatched}<br>
-                <button id="exportValidatedFiles" class="btn btn-default">Export validated metadata and raw data files</button>
+                <button id="exportValidatedFiles" class="btn btn-default"><span class="icon icon-export icon-text"></span> Export validated metadata and raw data files</button>
                 `
                 :
                 `No matched files was found.`

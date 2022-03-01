@@ -205,9 +205,10 @@ exports.selectValidate = async (event, args) => {
         BrowserWindow.getFocusedWindow().webContents.send("showValidationResult", {
             numMatched: matchedMeta.length,
             missingHeaderFields: missingHeaderFields,
+            missingFields: 0,
             unmatchedMeta: meta.length - matchedMeta.length,
             unmatchedFiles: filesMap.size - matchedMeta.length,
-            duplicateFilenamesInMeta: duplicateFilenamesInMeta.size
+            duplicateFilenamesInMeta: duplicateFilenamesInMeta.size,
         })
     })
     
