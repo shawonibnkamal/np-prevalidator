@@ -197,11 +197,19 @@ window.api.showValidationResult((data) => {
 });
 
 const buttonHandlers = function() {
+    // Go Back Handler
+    let goBack = document.getElementById('goBack');
+    if (goBack) {
+        goBack.addEventListener('click', async (event) => {
+            event.preventDefault();
+            window.api.goBack();
+        });
+    }
+
     // Handler for exportValidatedMetaFile button
     let exportValidatedFiles = document.getElementById('exportValidatedFiles');
     if (exportValidatedFiles) {
         exportValidatedFiles.addEventListener('click', async (event) => {
-            console.log("export meta clicked")
             event.preventDefault();
             window.api.exportValidatedFiles();
         });
@@ -211,7 +219,6 @@ const buttonHandlers = function() {
     let exportUnmatchedMeta = document.getElementById('exportUnmatchedMeta');
     if (exportUnmatchedMeta) {
         exportUnmatchedMeta.addEventListener('click', async (event) => {
-            console.log("export meta clicked")
             event.preventDefault();
             window.api.exportUnmatchedMeta();
         });
@@ -221,7 +228,6 @@ const buttonHandlers = function() {
     let exportUnmatchedDataFiles = document.getElementById('exportUnmatchedDataFiles');
     if (exportUnmatchedDataFiles) {
         exportUnmatchedDataFiles.addEventListener('click', async (event) => {
-            console.log("export clicked")
             event.preventDefault();
             window.api.exportUnmatchedDataFiles();
         });
@@ -231,7 +237,6 @@ const buttonHandlers = function() {
     let exportDuplicateFilenamesInMeta = document.getElementById('exportDuplicateFilenamesInMeta');
     if (exportDuplicateFilenamesInMeta) {
         exportDuplicateFilenamesInMeta.addEventListener('click', async (event) => {
-            console.log("export clicked")
             event.preventDefault();
             window.api.exportDuplicateFilenamesInMeta();
         });

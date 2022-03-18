@@ -7,22 +7,11 @@ const csvtojson = require("csvtojson");
 const {json2csv} = require('json-2-csv');
 const { performance } = require('perf_hooks');
 
-const reflectance_museum_header_fields = [
+const header_fields = [
     "filename",
+    "f_m",
     "institutioncode",
     "cataloguenumber",
-    "genus",
-    "specificepithet",
-    "patch",
-    "lightangle1",
-    "lightangle2",
-    "probeangle1",
-    "probeangle2",
-    "replicate"
-];
-  
-const reflectance_field_header_fields = [
-    "filename",
     "uniqueid",
     "genus",
     "specificepithet",
@@ -36,7 +25,6 @@ const reflectance_field_header_fields = [
 
 let metaFilePath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/metadata.csv"; // Directory of meta file csv
 let directoryPath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/RankinData"; // Direction of data files folder
-let dataSource = "field";
 
 let filesMap = new Map(); // List of files from directory filename:path
 let meta = []; // List of all meta
@@ -66,11 +54,6 @@ exports.selectDirectory = async (event, args) => {
     return directoryPath;
 }
 
-// Handler after changing source dropdown
-exports.selectSource = async (event, args) => {
-    dataSource = args;
-}
-
 // Helper function to get list of all files recursively
 const getAllFiles = async function(dirPath, filesMap) {
     return new Promise((resolve, reject) => {
@@ -98,15 +81,13 @@ const verifyMetaFileHeaderFields = function () {
     for (let i=0; i < metaFileHeaderFields.length; i++) {
         metaFileHeaderFields[i] = metaFileHeaderFields[i].toLowerCase().trim();
     }
-    
-    var reference_header_fields = dataSource.toLowerCase() == "field"? reflectance_field_header_fields : reflectance_museum_header_fields;
   
     let missingColumns = [];
     
-    for(var i =0;i<reference_header_fields.length;i++){
+    for(var i =0;i<header_fields.length;i++){
       // check = meta_file_obj_arr[i].replace(/\s/g, "");
-      if(!metaFileHeaderFields.includes(reference_header_fields[i])){
-        missingColumns.push(reference_header_fields[i]);
+      if(!metaFileHeaderFields.includes(header_fields[i])){
+        missingColumns.push(header_fields[i]);
       }
     }
     
@@ -157,7 +138,14 @@ const similarStrings = function(s1, s2) {
 
 // Handler after selecting validate button
 exports.selectValidate = async (event, args) => {
-    console.log("validate pressed");
+    console.log("Select Validate");
+
+    // Empty out arrayst
+    meta = []; // List of all meta
+    matchedMeta = []; // List of meta with filenames matched
+    unmatchedMeta = []; // List of meta without filenames matched
+    duplicateFilenamesInMeta = new Set(); // List of meta with duplicate filenames
+
     if (!metaFilePath || !directoryPath) {
         console.log("Files not selected");
         return "Files not selected";
