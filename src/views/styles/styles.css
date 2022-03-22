@@ -17,3 +17,15 @@
 .font-20 {
     font-size: 20px;
 }
+
+dialog {
+    padding: 0;
+    border: 1px solid #bebebe;
+    border-radius: 6px;
+    box-shadow: 0 0 30px rgba(0,0,0,.1);
+    overflow: hidden;
+}
+
+#modal-content {
+    padding:50px
+}

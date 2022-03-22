@@ -122,7 +122,7 @@ window.api.showValidationResult((data) => {
         <td>
             ${data.unmatchedMeta > 0 ?
                 `
-                <button class="btn btn-default"><span class="icon icon-tools icon-text"></span> Fix issues</button>
+                <button class="btn btn-default" id="fixUnmatchedMeta"><span class="icon icon-tools icon-text"></span> Fix issues</button>
                 <button id="exportUnmatchedMeta" class="btn btn-default"><span class="icon icon-export icon-text"></span> Export issues in csv</button>
                 `
                 :
@@ -241,4 +241,43 @@ const buttonHandlers = function() {
             window.api.exportDuplicateFilenamesInMeta();
         });
     }
+
+    // Modal
+    // this is just the HTML5 <dialog> API :)
+    let fixUnmatchedMeta = document.getElementById('fixUnmatchedMeta');
+    if (fixUnmatchedMeta) {
+        fixUnmatchedMeta.addEventListener('click', async (event) => {
+            event.preventDefault();
+            //open modal
+            let data = await window.api.getUnmatchedMeta(0);
+            console.log(data);
+
+            let html = `
+                <table class="table-striped">
+                <thead>
+                <th>Unmatched Metadata File Name</th>
+                <th>Similar Raw File Name(s)</th>
+                </thead>
+            `;
+
+            for(let i=0; i < data.length; i++) {
+                html += `
+                <tr>
+                    <td>${data[i].filename}</td>
+                    <td>${data[i].similarFiles}</td>
+                </tr>
+                `
+            }
+
+            html += `</table>`
+
+            const modalBody = document.getElementById("modalBody");
+            modalBody.innerHTML = html;
+
+            document.getElementById('modal').showModal();
+        });
+    }
+
+
+    document.getElementById('closeModal').onclick = () => document.getElementById('modal').close(false);
 }

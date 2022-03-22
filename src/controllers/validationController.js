@@ -276,23 +276,22 @@ const compare = function(a, b) {
     return 0;
 }
 
-// Export unmatched meta file with similar filenames
-exports.exportUnmatchedMeta = async (event, args) => {
-    let startTime = performance.now();
-    console.log("Export unmatched meta clicked")
-    let file = await dialog.showSaveDialog({
-        title: 'Select the File Path to save',
-        defaultPath: path.join(__dirname, '/unmatched_metafile.csv'),
-        buttonLabel: 'Save',
-        // Restricting the user to only Text Files.
-        filters: [{
-            name: 'CSV File',
-            extensions: ['csv']
-        }],
-        properties: []
-    });
+//Helper function: get list of unmatchedMeta
+// -1 pagination means calculate similar files for all
+// 0 pagination means calculate first page of 10 entries
+const getUnmatchedMetaHelper = function(pagination=-1) {
+    // Show 10 entries only if pagination applied
+    let start = 0
+    let end = unmatchedMeta.length
+    if (pagination >= 0) {
+        start = 10 * pagination + 1;
+        if (start > unmatchedMeta.length) {
+            start = 0;
+        }
+        end = Math.min(start+10, unmatchedMeta.length);
+    }
 
-    for (let i = 0; i < unmatchedMeta.length; i++) {
+    for (let i = start; i < end; i++) {
         let unmatchedMetaFilename = unmatchedMeta[i]['filename'];
         let similarFilesList = [];
         filesMap.forEach((value, key, map) => {
@@ -310,9 +309,30 @@ exports.exportUnmatchedMeta = async (event, args) => {
             unmatchedMeta[i]['similarFiles'] += `${similarFilesList[j]['filename']}\n`;
         }
     }
+    
+    return unmatchedMeta.slice(start, end);
+}
+
+// Export unmatched meta file with similar filenames
+exports.exportUnmatchedMeta = async (event, args) => {
+    let startTime = performance.now();
+    console.log("Export unmatched meta clicked")
+    let file = await dialog.showSaveDialog({
+        title: 'Select the File Path to save',
+        defaultPath: path.join(__dirname, '/unmatched_metafile.csv'),
+        buttonLabel: 'Save',
+        // Restricting the user to only Text Files.
+        filters: [{
+            name: 'CSV File',
+            extensions: ['csv']
+        }],
+        properties: []
+    });
+
+    let data = getUnmatchedMetaHelper();
 
     // Download csv
-    json2csv(unmatchedMeta, (err, csvOutput) => {
+    json2csv(data, (err, csvOutput) => {
         if (err) {
             throw err;
         }
@@ -324,6 +344,14 @@ exports.exportUnmatchedMeta = async (event, args) => {
         console.log(`Finished exporting unmatched_metafile in ${endTime - startTime} milliseconds`);
     });
     
+}
+
+// Get unmatched metadata json
+exports.getUnmatchedMeta = async(event, args) => {
+    console.log("Fix issues clicked!");
+    let pagination = args;
+    let data = getUnmatchedMetaHelper(pagination);
+    return data;
 }
 
 // Export unmatched data file with similar meta

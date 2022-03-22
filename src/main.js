@@ -64,4 +64,8 @@ ipcMain.on(
   "exportDuplicateFilenamesInMeta",
   validationController.exportDuplicateFilenamesInMeta
 );
+ipcMain.handle(
+  "getUnmatchedMeta",
+  validationController.getUnmatchedMeta
+);
 // index.html controllers end ==================================
