@@ -1,3 +1,8 @@
+// global states
+var state = {
+    pagination: 0
+}
+
 // Show validation result
 window.api.showValidationResult((data) => {
     console.log(data);
@@ -6,10 +11,11 @@ window.api.showValidationResult((data) => {
     text += `
     <h3>Validation checks</h3>
     <table class="table-striped">
-    <thead>
-    <th>Issues</th>
-    <th>Actions</th>
-    </thead>`
+        <thead>
+        <th>Issues</th>
+        <th>Actions</th>
+    </thead>
+    `;
 
     text += `
     <tr>
@@ -19,8 +25,7 @@ window.api.showValidationResult((data) => {
             : 
             `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
             }
-
-            <div> 
+ 
                 <strong>Metadata Headers</strong>
                 <div>   
                 ${data.missingHeaderFields.length > 0 ? 
@@ -196,6 +201,81 @@ window.api.showValidationResult((data) => {
     buttonHandlers();
 });
 
+const fixIssues = async (event) => {
+    event.preventDefault();
+    //open modal
+    let result = await window.api.getUnmatchedMeta(state.pagination);
+    let data = result.data;
+    let prev = result.prev;
+    let next = result.next;
+    let current = result.current;
+    let total = result.total;
+    console.log(data);
+    console.log(prev, next);
+
+    // Update modalBody start ===========
+    let html = `
+        <table class="table-striped">
+        <thead>
+        <th>Unmatched Metadata File Name</th>
+        <th>Similar Raw File Name(s)</th>
+        </thead>
+    `;
+
+    for(let i=0; i < data.length; i++) {
+        html += `
+        <tr>
+            <td>${data[i].filename}</td>
+            <td>
+                <table>
+        `;
+
+        for (let j=0; j < data[i].similarFiles.length; j++) {
+            html += `
+                <tr>
+                    <td>
+                        <div class="flex-justify">
+                            ${data[i].similarFiles[j]}
+                            <span>
+                                <button class="btn btn-positive">Accept</button>
+                                <button class="btn btn-negative">Reject</button>
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        html += `
+                </table>
+            </td>
+        </tr>
+        `;
+    }
+
+    html += `</table>`
+
+    const modalBody = document.getElementById("modalBody");
+    modalBody.innerHTML = html;
+    // Update modalBody end ============
+
+    // Update pagination
+    if (prev !== false) {
+        document.getElementById("goPrev").disabled = false;
+    } else {
+        document.getElementById("goPrev").disabled = true;
+    }
+    if (next !== false) {
+        document.getElementById("goNext").disabled = false;
+    } else {
+        document.getElementById("goNext").disabled = true;
+    }
+    document.getElementById("currentPage").innerHTML = `Page ${current+1} out of ${total}`;
+
+
+    document.getElementById('modal').showModal();
+}
+
 const buttonHandlers = function() {
     // Go Back Handler
     let goBack = document.getElementById('goBack');
@@ -242,42 +322,28 @@ const buttonHandlers = function() {
         });
     }
 
-    // Modal
-    // this is just the HTML5 <dialog> API :)
+    // Handler for selecting fix issues
     let fixUnmatchedMeta = document.getElementById('fixUnmatchedMeta');
     if (fixUnmatchedMeta) {
-        fixUnmatchedMeta.addEventListener('click', async (event) => {
-            event.preventDefault();
-            //open modal
-            let data = await window.api.getUnmatchedMeta(0);
-            console.log(data);
+        fixUnmatchedMeta.addEventListener('click', fixIssues);
+    }
 
-            let html = `
-                <table class="table-striped">
-                <thead>
-                <th>Unmatched Metadata File Name</th>
-                <th>Similar Raw File Name(s)</th>
-                </thead>
-            `;
-
-            for(let i=0; i < data.length; i++) {
-                html += `
-                <tr>
-                    <td>${data[i].filename}</td>
-                    <td>${data[i].similarFiles}</td>
-                </tr>
-                `
-            }
-
-            html += `</table>`
-
-            const modalBody = document.getElementById("modalBody");
-            modalBody.innerHTML = html;
-
-            document.getElementById('modal').showModal();
+    // Handler for pagination
+    let goNext = document.getElementById('goNext');
+    if (goNext) {
+        goNext.addEventListener('click', async(event) => {
+            state.pagination += 1;
+            fixIssues(event);
         });
     }
 
+    let goPrev = document.getElementById('goPrev');
+    if (goPrev) {
+        goPrev.addEventListener('click', async(event) => {
+            state.pagination -= 1;
+            fixIssues(event);
+        });
+    }
 
     document.getElementById('closeModal').onclick = () => document.getElementById('modal').close(false);
 }

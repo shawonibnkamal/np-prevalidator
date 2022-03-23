@@ -279,7 +279,8 @@ const compare = function(a, b) {
 //Helper function: get list of unmatchedMeta
 // -1 pagination means calculate similar files for all
 // 0 pagination means calculate first page of 10 entries
-const getUnmatchedMetaHelper = function(pagination=-1) {
+// output can be of "string" and "array"
+const getUnmatchedMetaHelper = function(pagination=-1, output="string") {
     // Show 10 entries only if pagination applied
     let start = 0
     let end = unmatchedMeta.length
@@ -305,12 +306,27 @@ const getUnmatchedMetaHelper = function(pagination=-1) {
         if (similarFilesListLength > 7) {
             similarFilesListLength = 7;
         }
+        if (output == "string") {
+            unmatchedMeta[i]['similarFiles'] = ``;
+        } else {
+            unmatchedMeta[i]['similarFiles'] = [];
+        }
         for (let j = 0; j < similarFilesListLength; j++) {
-            unmatchedMeta[i]['similarFiles'] += `${similarFilesList[j]['filename']}\n`;
+            if (output == "string") {
+                unmatchedMeta[i]['similarFiles'] += `${similarFilesList[j]['filename']}\n`;
+            } else {
+                unmatchedMeta[i]['similarFiles'].push(similarFilesList[j]['filename']);
+            }
         }
     }
     
-    return unmatchedMeta.slice(start, end);
+    return {
+        data: unmatchedMeta.slice(start, end),
+        prev: (pagination != 0 && pagination != -1 )? pagination - 1 : false,
+        next: end != unmatchedMeta.length ? pagination + 1 : false,
+        current: pagination,
+        total: Math.ceil(unmatchedMeta.length / 10)
+    };
 }
 
 // Export unmatched meta file with similar filenames
@@ -329,7 +345,7 @@ exports.exportUnmatchedMeta = async (event, args) => {
         properties: []
     });
 
-    let data = getUnmatchedMetaHelper();
+    let data = getUnmatchedMetaHelper().data;
 
     // Download csv
     json2csv(data, (err, csvOutput) => {
@@ -347,10 +363,11 @@ exports.exportUnmatchedMeta = async (event, args) => {
 }
 
 // Get unmatched metadata json
+// To be used in frontend of fix issues button
 exports.getUnmatchedMeta = async(event, args) => {
     console.log("Fix issues clicked!");
     let pagination = args;
-    let data = getUnmatchedMetaHelper(pagination);
+    let data = getUnmatchedMetaHelper(pagination, "array");
     return data;
 }
 
