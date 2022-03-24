@@ -29,9 +29,9 @@ window.api.showValidationResult((data) => {
                 <strong>Metadata Headers</strong>
                 <div>   
                 ${data.missingHeaderFields.length > 0 ? 
-                    `Missing required headers: ` + data.missingHeaderFields 
+                    `Missing required headers in the metadata: ` + data.missingHeaderFields 
                 : 
-                    `Metadata contains all the required headers.`
+                    `All the required headers have been filled.`
                 }
                 </div>
             </div>
@@ -54,9 +54,9 @@ window.api.showValidationResult((data) => {
                 <strong>Metadata Fields</strong>
                 <div>   
                 ${data.missingFields.length > 0 ? 
-                    `Missing required fields in metadata: ` + data.missingFields 
+                    `Missing required fields in the metadata: ` + data.missingFields 
                 : 
-                    `Metadata contains all the required fields.`
+                    `All required fields have been filled.`
                 }
                 </div>
             </div>
@@ -82,12 +82,12 @@ window.api.showValidationResult((data) => {
             `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
             }
             <div> 
-                <strong>Duplicate filenames in metadata</strong>
+                <strong>Duplicate Filenames in Metadata</strong>
                 <div>
                     ${data.duplicateFilenamesInMeta > 0 ?
-                        `Number of duplicate filenames in metadata: ${data.duplicateFilenamesInMeta}`
+                        `Number of duplicate filenames in the metadata: ${data.duplicateFilenamesInMeta}`
                     :
-                        `There are no duplicate filenames in metadata.`
+                        `There are no duplicate filenames in the metadata.`
                     }
                 </div>
             </div>
@@ -114,10 +114,10 @@ window.api.showValidationResult((data) => {
             `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
             }
             <div> 
-                <strong>Metadata rows without matches</strong>
+                <strong>Metadata rows without raw data file</strong>
                 <div>
                     ${data.unmatchedMeta > 0 ?
-                        `Number of metadata rows without matches: ` + data.unmatchedMeta
+                        `Number of metadata rows without raw data file: ` + data.unmatchedMeta
                     :
                         `All metadata rows contains valid a filename.`
                     }
@@ -147,12 +147,12 @@ window.api.showValidationResult((data) => {
             `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
             }
             <div> 
-                <strong>Raw data files without matches</strong>
+                <strong>Raw data files without metadata</strong>
                 <div>
                     ${data.unmatchedFiles > 0 ?
-                        `Number of raw data files without matches: ${data.unmatchedFiles}<br>`
+                        `Number of raw data files without metadata: ${data.unmatchedFiles}<br>`
                     :
-                        `All files has a valid match.`
+                        `All files has a valid a metadata.`
                     }
                 </div>
             </div>
@@ -217,8 +217,8 @@ const fixIssues = async (event) => {
     let html = `
         <table class="table-striped">
         <thead>
-        <th>Unmatched Metadata File Name</th>
-        <th>Similar Raw File Name(s)</th>
+        <th>Metadata Filename</th>
+        <th>Possible Raw Filename(s)</th>
         </thead>
     `;
 
