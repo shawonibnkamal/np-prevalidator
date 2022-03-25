@@ -67,7 +67,7 @@ const getAllFiles = async function(dirPath, filesMap) {
             if (fs.statSync(dirPath + "/" + file).isDirectory()) {
                 filesMap = getAllFiles(dirPath + "/" + file, filesMap)
             } else {
-                filesMap.set(file, [path.join(dirPath, "/", file), false]); //[path, matchedWithMeta]
+                filesMap.set(file, {filename: path.join(dirPath, "/", file), matchedWithMeta: false}); //[path, matchedWithMeta]
             }
         })
     
@@ -177,13 +177,13 @@ exports.selectValidate = async (event, args) => {
             let filesMapValue = filesMap.get(meta[i]['filename']);
 
             // Check for duplicates
-            if (filesMapValue[1] == true) {
+            if (filesMapValue.matchedWithMeta == true) {
                 duplicateFilenamesInMeta.add(meta[i]['filename']);
             } else {
                 matchedMeta.push(meta[i]);
-                filesMap.set(meta[i]['filename'], [filesMapValue[0], true]);
+                filesMap.set(meta[i]['filename'], {filename: filesMapValue.filename, matchedWithMeta: true});
                 // Unmatched and matched hash maps
-                matchedFilesMap.set(meta[i]['filename'], [filesMapValue[0], true]);
+                matchedFilesMap.set(meta[i]['filename'], {filename: filesMapValue.filename, matchedWithMeta: true});
                 unmatchedFilesMap.delete(meta[i]['filename']);
             }
             
@@ -258,8 +258,8 @@ exports.exportValidatedFiles = async (event, args) => {
         archive.pipe(stream);
         // append files
         for(let i = 0; i < matchedMeta.length; i++) {
-            console.log(filesMap.get(matchedMeta[i]['filename'])[0])
-            archive.file(filesMap.get(matchedMeta[i]['filename'])[0], {name: matchedMeta[i]['filename']});
+            //console.log(filesMap.get(matchedMeta[i]['filename'])[0])
+            archive.file(filesMap.get(matchedMeta[i]['filename']).filename, {name: matchedMeta[i]['filename']});
         }
         archive.on('error', err => {throw err;});
         archive.finalize();
@@ -333,7 +333,8 @@ const getUnmatchedMetaHelper = function(pagination=-1, output="string") {
         let unmatchedMetaFilename = unmatchedMeta[i]['filename'];
         let similarFilesList = [];
         filesMap.forEach((value, key, map) => {
-            if (value[1] == false) {
+            if (value.matchedWithMeta == false) {
+                console.log(value);
                 let similarity = similarStrings(unmatchedMetaFilename, key);
                 if (similarity > 0.75) {
                     similarFilesList.push({filename: key, similarity: similarity});
@@ -375,14 +376,13 @@ const getUnmatchedMetaHelper = function(pagination=-1, output="string") {
 const getUnmatchedRawDataFilesHelper = function(pagination=-1, output="string") {
     let unmatchedFilesList = [];
     for (const [key, value] of unmatchedFilesMap.entries()) {
-        if (value[1] == false) {
+        if (value.matchedWithMeta == false) {
             unmatchedFilesList.push({
                 filename: key,
                 similar: ""
             });
         }
     }
-
     // Show 10 entries only if pagination applied
     let start = 0
     let end = unmatchedFilesList.length
@@ -394,7 +394,7 @@ const getUnmatchedRawDataFilesHelper = function(pagination=-1, output="string") 
         end = Math.min(start+10, unmatchedFilesList.length);
     }
 
-    for (let i = 0; i < unmatchedFilesList.length; i++) {
+    for (let i = start; i < end; i++) {
         let unmatchedFilename = unmatchedFilesList[i]['filename'];
         let similarMetaList = [];
         for (let j = 0; j < meta.length; j++) {
@@ -425,9 +425,9 @@ const getUnmatchedRawDataFilesHelper = function(pagination=-1, output="string") 
     return {
         data: unmatchedFilesList.slice(start, end),
         prev: (pagination != 0 && pagination != -1 )? pagination - 1 : false,
-        next: end != unmatchedMeta.length ? pagination + 1 : false,
+        next: end != unmatchedFilesList.length ? pagination + 1 : false,
         current: pagination,
-        total: Math.ceil(unmatchedMeta.length / 10)
+        total: Math.ceil(unmatchedFilesList.length / 10)
     };
 }
 
