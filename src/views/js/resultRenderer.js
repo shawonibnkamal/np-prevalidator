@@ -1,6 +1,7 @@
 // global states
 var state = {
-    pagination: 0
+    pagination: 0,
+    fixIssuesType: "meta"
 }
 
 // Show validation result
@@ -160,7 +161,7 @@ window.api.showValidationResult((data) => {
         <td>
             ${data.unmatchedFiles > 0 ?
                 `
-                <button class="btn btn-default"><span class="icon icon-tools icon-text"></span> Fix issues</button>
+                <button id="fixUnmatchedDataFiles" class="btn btn-default"><span class="icon icon-tools icon-text"></span> Fix issues</button>
                 <button id="exportUnmatchedDataFiles" class="btn btn-default"><span class="icon icon-export icon-text"></span> Export issues in csv</button>
                 `
                 :
@@ -201,10 +202,16 @@ window.api.showValidationResult((data) => {
     buttonHandlers();
 });
 
+// type can be of "meta" and "rawdata"
 const fixIssues = async (event) => {
-    event.preventDefault();
     //open modal
-    let result = await window.api.getUnmatchedMeta(state.pagination);
+    let result;
+    if (state.fixIssuesType == "meta") {
+        result = await window.api.fixUnmatchedMeta(state.pagination);
+    } else {
+        result = await window.api.fixUnmatchedDataFiles(state.pagination);
+    }
+    
     let data = result.data;
     let prev = result.prev;
     let next = result.next;
@@ -230,12 +237,12 @@ const fixIssues = async (event) => {
                 <table>
         `;
 
-        for (let j=0; j < data[i].similarFiles.length; j++) {
+        for (let j=0; j < data[i].similar.length; j++) {
             html += `
                 <tr>
                     <td>
                         <div class="flex-justify">
-                            ${data[i].similarFiles[j]}
+                            ${data[i].similar[j]}
                             <span>
                                 <button class="btn btn-positive">Accept</button>
                                 <button class="btn btn-negative">Reject</button>
@@ -322,10 +329,26 @@ const buttonHandlers = function() {
         });
     }
 
-    // Handler for selecting fix issues
+    // Handler for selecting fix meta issues
     let fixUnmatchedMeta = document.getElementById('fixUnmatchedMeta');
     if (fixUnmatchedMeta) {
-        fixUnmatchedMeta.addEventListener('click', fixIssues);
+        fixUnmatchedMeta.addEventListener('click', async(event) => {
+            event.preventDefault();
+            state.fixIssuesType = "meta";
+            state.pagination = 0;
+            fixIssues();
+        });
+    }
+
+    // Handler for selecting fix raw data issues
+    let fixUnmatchedDataFiles = document.getElementById('fixUnmatchedDataFiles');
+    if (fixUnmatchedDataFiles) {
+        fixUnmatchedDataFiles.addEventListener('click', async(event) => {
+            event.preventDefault();
+            state.fixIssuesType = "rawdata";
+            state.pagination = 0;
+            fixIssues();
+        });
     }
 
     // Handler for pagination

@@ -23,10 +23,12 @@ const header_fields = [
     "replicate"
 ];
 
-let metaFilePath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/metadata.csv"; // Directory of meta file csv
+let metaFilePath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/updated_metadata.csv"; // Directory of meta file csv
 let directoryPath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/RankinData"; // Direction of data files folder
 
 let filesMap = new Map(); // List of files from directory filename:path
+let matchedFilesMap = new Map(); // List of raw data files match
+let unmatchedFilesMap = new Map(); // List of raw data files unmatched
 let meta = []; // List of all meta
 let matchedMeta = []; // List of meta with filenames matched
 let unmatchedMeta = []; // List of meta without filenames matched
@@ -152,7 +154,8 @@ exports.selectValidate = async (event, args) => {
     }
         
     // Read datafile names from directory
-    filesMap = await getAllFiles(directoryPath)
+    filesMap = await getAllFiles(directoryPath);
+    unmatchedFilesMap = new Map(filesMap);
     
     // Read meta from csv
     meta = await csvtojson().fromFile(metaFilePath)
@@ -179,11 +182,14 @@ exports.selectValidate = async (event, args) => {
             } else {
                 matchedMeta.push(meta[i]);
                 filesMap.set(meta[i]['filename'], [filesMapValue[0], true]);
+                // Unmatched and matched hash maps
+                matchedFilesMap.set(meta[i]['filename'], [filesMapValue[0], true]);
+                unmatchedFilesMap.delete(meta[i]['filename']);
             }
             
         } else {
             // No matches found
-            unmatchedMeta.push({filename: meta[i]['filename'], similarFiles: ""});
+            unmatchedMeta.push({filename: meta[i]['filename'], similar: ""});
         }
     }
 
@@ -266,6 +272,37 @@ exports.exportValidatedFiles = async (event, args) => {
     });
 }
 
+// Controller for exporting duplicate filenames in meta
+exports.exportDuplicateFilenamesInMeta = async (event, args) => {
+    console.log("Export duplicate filename clicked")
+    let file = await dialog.showSaveDialog({
+        title: 'Select the File Path to save',
+        defaultPath: path.join(__dirname, '/duplicate.csv'),
+        buttonLabel: 'Save',
+        // Restricting the user to only Text Files.
+        filters: [{
+            name: 'CSV File',
+            extensions: ['csv']
+        }],
+        properties: []
+    });
+
+    let duplicateFilenamesInMetaArray = [];
+    for (let [key, value] of duplicateFilenamesInMeta.entries()) {
+        duplicateFilenamesInMetaArray.push({"filename": key})
+    }
+
+    // Download csv
+    json2csv(duplicateFilenamesInMetaArray, (err, csvOutput) => {
+        if (err) {
+            throw err;
+        }
+    
+        // write csvOutput to a file
+        fs.writeFileSync(path.join(file.filePath.toString()), csvOutput);
+    });
+}
+
 const compare = function(a, b) {
     if ( a.similarity < b.similarity ){
         return 1;
@@ -276,7 +313,7 @@ const compare = function(a, b) {
     return 0;
 }
 
-//Helper function: get list of unmatchedMeta
+// Helper function: get list of unmatchedMeta
 // -1 pagination means calculate similar files for all
 // 0 pagination means calculate first page of 10 entries
 // output can be of "string" and "array"
@@ -296,9 +333,11 @@ const getUnmatchedMetaHelper = function(pagination=-1, output="string") {
         let unmatchedMetaFilename = unmatchedMeta[i]['filename'];
         let similarFilesList = [];
         filesMap.forEach((value, key, map) => {
-            let similarity = similarStrings(unmatchedMetaFilename, key);
-            if (similarity > 0.75) {
-                similarFilesList.push({filename: key, similarity: similarity});
+            if (value[1] == false) {
+                let similarity = similarStrings(unmatchedMetaFilename, key);
+                if (similarity > 0.75) {
+                    similarFilesList.push({filename: key, similarity: similarity});
+                }
             }
         });
         similarFilesList.sort(compare);
@@ -307,21 +346,84 @@ const getUnmatchedMetaHelper = function(pagination=-1, output="string") {
             similarFilesListLength = 7;
         }
         if (output == "string") {
-            unmatchedMeta[i]['similarFiles'] = ``;
+            unmatchedMeta[i]['similar'] = ``;
         } else {
-            unmatchedMeta[i]['similarFiles'] = [];
+            unmatchedMeta[i]['similar'] = [];
         }
         for (let j = 0; j < similarFilesListLength; j++) {
             if (output == "string") {
-                unmatchedMeta[i]['similarFiles'] += `${similarFilesList[j]['filename']}\n`;
+                unmatchedMeta[i]['similar'] += `${similarFilesList[j]['filename']}\n`;
             } else {
-                unmatchedMeta[i]['similarFiles'].push(similarFilesList[j]['filename']);
+                unmatchedMeta[i]['similar'].push(similarFilesList[j]['filename']);
             }
         }
     }
     
     return {
         data: unmatchedMeta.slice(start, end),
+        prev: (pagination != 0 && pagination != -1 )? pagination - 1 : false,
+        next: end != unmatchedMeta.length ? pagination + 1 : false,
+        current: pagination,
+        total: Math.ceil(unmatchedMeta.length / 10)
+    };
+}
+
+// Helper function: get list of unmatched raw data files
+// -1 pagination means calculate similar files for all
+// 0 pagination means calculate first page of 10 entries
+// output can be of "string" and "array"
+const getUnmatchedRawDataFilesHelper = function(pagination=-1, output="string") {
+    let unmatchedFilesList = [];
+    for (const [key, value] of unmatchedFilesMap.entries()) {
+        if (value[1] == false) {
+            unmatchedFilesList.push({
+                filename: key,
+                similar: ""
+            });
+        }
+    }
+
+    // Show 10 entries only if pagination applied
+    let start = 0
+    let end = unmatchedFilesList.length
+    if (pagination >= 0) {
+        start = 10 * pagination + 1;
+        if (start > unmatchedFilesList.length) {
+            start = 0;
+        }
+        end = Math.min(start+10, unmatchedFilesList.length);
+    }
+
+    for (let i = 0; i < unmatchedFilesList.length; i++) {
+        let unmatchedFilename = unmatchedFilesList[i]['filename'];
+        let similarMetaList = [];
+        for (let j = 0; j < meta.length; j++) {
+            let similarity = similarStrings(unmatchedFilename, meta[j]['filename']);
+            if (similarity > 0.75) {
+                similarMetaList.push({filename: meta[j]['filename'], similarity: similarity});
+            }
+        }
+        similarMetaList.sort(compare);
+        let similarMetaListLength = similarMetaList.length;
+        if (similarMetaListLength > 7) {
+            similarMetaListLength = 7;
+        }
+        if (output == "string") {
+            unmatchedFilesList[i]['similar'] = ``;
+        } else {
+            unmatchedFilesList[i]['similar'] = [];
+        }
+        for (let j = 0; j < similarMetaListLength; j++) {
+            if (output == "string") {
+                unmatchedFilesList[i]['similar'] += `${similarMetaList[j]['filename']}\n`;
+            } else {
+                unmatchedFilesList[i]['similar'].push(similarMetaList[j]['filename']);
+            }
+        }
+    }
+    
+    return {
+        data: unmatchedFilesList.slice(start, end),
         prev: (pagination != 0 && pagination != -1 )? pagination - 1 : false,
         next: end != unmatchedMeta.length ? pagination + 1 : false,
         current: pagination,
@@ -362,15 +464,6 @@ exports.exportUnmatchedMeta = async (event, args) => {
     
 }
 
-// Get unmatched metadata json
-// To be used in frontend of fix issues button
-exports.getUnmatchedMeta = async(event, args) => {
-    console.log("Fix issues clicked!");
-    let pagination = args;
-    let data = getUnmatchedMetaHelper(pagination, "array");
-    return data;
-}
-
 // Export unmatched data file with similar meta
 exports.exportUnmatchedDataFiles = async (event, args) => {
     let startTime = performance.now();
@@ -387,37 +480,10 @@ exports.exportUnmatchedDataFiles = async (event, args) => {
         properties: []
     });
     
-    let unmatchedFilesList = [];
-    for (const [key, value] of filesMap.entries()) {
-        if (value[1] == false) {
-            unmatchedFilesList.push({
-                filename: key,
-                similarMeta: ""
-            });
-        }
-    }
-
-    for (let i = 0; i < unmatchedFilesList.length; i++) {
-        let unmatchedFilename = unmatchedFilesList[i]['filename'];
-        let similarMetaList = [];
-        for (let j = 0; j < meta.length; j++) {
-            let similarity = similarStrings(unmatchedFilename, meta[j]['filename']);
-            if (similarity > 0.75) {
-                similarMetaList.push({filename: meta[j]['filename'], similarity: similarity});
-            }
-        }
-        similarMetaList.sort(compare);
-        let similarMetaListLength = similarMetaList.length;
-        if (similarMetaListLength > 7) {
-            similarMetaListLength = 7;
-        }
-        for (let j = 0; j < similarMetaListLength; j++) {
-            unmatchedFilesList[i]['similarMeta'] += `${similarMetaList[j]['filename']}\n`;
-        }
-    }
+    let data = getUnmatchedRawDataFilesHelper().data;
 
     // Download csv
-    json2csv(unmatchedFilesList, (err, csvOutput) => {
+    json2csv(data, (err, csvOutput) => {
         if (err) {
             throw err;
         }
@@ -431,33 +497,18 @@ exports.exportUnmatchedDataFiles = async (event, args) => {
     
 }
 
-// Controller for exporting duplicate filenames in meta
-exports.exportDuplicateFilenamesInMeta = async (event, args) => {
-    console.log("Export duplicate filename clicked")
-    let file = await dialog.showSaveDialog({
-        title: 'Select the File Path to save',
-        defaultPath: path.join(__dirname, '/duplicate.csv'),
-        buttonLabel: 'Save',
-        // Restricting the user to only Text Files.
-        filters: [{
-            name: 'CSV File',
-            extensions: ['csv']
-        }],
-        properties: []
-    });
+// Get unmatched metadata json
+// To be used in frontend of fix issues button
+exports.fixUnmatchedMeta = async(event, args) => {
+    console.log("Fix meta issues clicked!");
+    let pagination = args;
+    let data = getUnmatchedMetaHelper(pagination, "array");
+    return data;
+}
 
-    let duplicateFilenamesInMetaArray = [];
-    for (let [key, value] of duplicateFilenamesInMeta.entries()) {
-        duplicateFilenamesInMetaArray.push({"filename": key})
-    }
-
-    // Download csv
-    json2csv(duplicateFilenamesInMetaArray, (err, csvOutput) => {
-        if (err) {
-            throw err;
-        }
-    
-        // write csvOutput to a file
-        fs.writeFileSync(path.join(file.filePath.toString()), csvOutput);
-    });
+exports.fixUnmatchedDataFiles = async(event, args) => {
+    console.log("Fix data files issues clicked!");
+    let pagination = args;
+    let data = getUnmatchedRawDataFilesHelper(pagination, "array");
+    return data;
 }
