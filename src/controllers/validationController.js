@@ -33,6 +33,7 @@ let metaMap = new Map(); // List of all meta
 let matchedMetaMap = new Map(); // List of meta with filenames matched
 let unmatchedMetaMap = new Map(); // List of meta without filenames matched
 let duplicateFilenamesInMeta = new Set(); // List of meta with duplicate filenames
+let missingHeaderFields = [] // List of missing header fields
 
 
 // Handler after selecting meta button
@@ -77,12 +78,10 @@ const getAllFiles = async function(dirPath, filesMap) {
 
 // Helper function to verify meta headers
 const verifyMetaFileHeaderFields = function () {
-    // verify if each column is existing
+    // verify if each column is existing   
 
     let metaFileHeaderFields = Object.keys(Array.from(metaMap.values())[0]);
     
-    
-
     for (let i=0; i < metaFileHeaderFields.length; i++) {
         metaFileHeaderFields[i] = metaFileHeaderFields[i].toLowerCase().trim();
     }
@@ -142,10 +141,7 @@ const similarStrings = function(s1, s2) {
     return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
 }
 
-// Handler after selecting validate button
-exports.selectValidate = async (event, args) => {
-    console.log("Select Validate");
-
+const selectValidateHelper = async() => {
     // Empty out arrayst
     metaMap = new Map(); // List of all meta
     matchedMetaMap = new Map(); // List of meta with filenames matched
@@ -176,7 +172,7 @@ exports.selectValidate = async (event, args) => {
     }
 
     // Check if header files are present in meta
-    let missingHeaderFields = verifyMetaFileHeaderFields();
+    missingHeaderFields = verifyMetaFileHeaderFields();
 
 
     // Get matchedMeta and unmatchedMeta
@@ -201,6 +197,13 @@ exports.selectValidate = async (event, args) => {
             unmatchedMetaMap.set(metaList[i]['filename'], {filename: metaList[i]['filename'], similar: ""});
         }
     }
+}
+
+// Handler after selecting validate button
+exports.selectValidate = async (event, args) => {
+    console.log("Select Validate");
+
+    await selectValidateHelper();
 
     // Show results
     BrowserWindow.getFocusedWindow().loadFile('./views/html/result.html');
@@ -209,7 +212,7 @@ exports.selectValidate = async (event, args) => {
             numMatched: matchedMetaMap.size,
             missingHeaderFields: missingHeaderFields,
             missingFields: 0,
-            unmatchedMeta: metaList.length - matchedMetaMap.size,
+            unmatchedMeta: metaMap.size - matchedMetaMap.size,
             unmatchedFiles: filesMap.size - matchedMetaMap.size,
             duplicateFilenamesInMeta: duplicateFilenamesInMeta.size,
         })
@@ -234,7 +237,8 @@ exports.exportValidatedFiles = async (event, args) => {
     });
     
     // Download csv
-    json2csv(matchedMeta, (err, csvOutput) => {
+    let matchedMetaList = Array.from(matchedMetaMap.values());
+    json2csv(matchedMetaList, (err, csvOutput) => {
         if (err) {
             throw err;
         }
@@ -266,9 +270,9 @@ exports.exportValidatedFiles = async (event, args) => {
     await new Promise((resolve, reject) => {
         archive.pipe(stream);
         // append files
-        for(let i = 0; i < matchedMeta.length; i++) {
+        for(let i = 0; i < matchedMetaList.length; i++) {
             //console.log(filesMap.get(matchedMeta[i]['filename'])[0])
-            archive.file(filesMap.get(matchedMeta[i]['filename']).filename, {name: matchedMeta[i]['filename']});
+            archive.file(filesMap.get(matchedMetaList[i]['filename']).filename, {name: matchedMetaList[i]['filename']});
         }
         archive.on('error', err => {throw err;});
         archive.finalize();
@@ -528,8 +532,8 @@ exports.fixUnmatchedDataFiles = async(event, args) => {
     return data;
 }
 
-exports.acceptMetaSuggestion = async(event, type, filename, similar) => {
-    console.log(type, filename, similar);
+exports.acceptSuggestion = async(event, type, filename, similar) => {
+    console.log("Accept suggestion", type, filename, similar);
     if (type == "meta") {
         let value = metaMap.get(filename);
         value.filename = similar;
@@ -541,10 +545,63 @@ exports.acceptMetaSuggestion = async(event, type, filename, similar) => {
     } else if (type == "rawdata") {
         let value = filesMap.get(filename);
 
-        filesMap.delete(filename);
-        matchedFilesMap.set(filename, value);
         unmatchedFilesMap.delete(filename);
+        matchedFilesMap.set(filename, value);
+        filesMap.delete(filename);
+
+        // Update path
+        let oldPath = value.filename;
+        let newPath = oldPath.split("/");
+        newPath = newPath.slice(0, newPath.length - 1).join("/")
+        if (newPath.length !== 0) {
+            newPath += "/";
+        }
+        newPath += similar;
+
+        value.filename = newPath;
+        filesMap.set(filename, value);
+
+        fs.rename(oldPath, newPath, function(err) {
+            if ( err ) console.log('ERROR: ' + err);
+        });
     }
 
     return true;
+}
+
+exports.rejectSuggestion = async (event, type, filename) => {
+    console.log("Reject suggestion", type, filename);
+
+    if (type == "meta") {
+        unmatchedMetaMap.delete(filename);
+
+    } else if (type == "rawdata") {
+        unmatchedFilesMap.delete(filename);
+
+    }
+
+    return true;
+}
+
+exports.finishSuggestion = async (event, type) => {
+
+    console.log("Finish suggestion", type);
+
+    if (type == "meta") {
+        let metaList = Array.from(metaMap.values());
+        json2csv(metaList, (err, csvOutput) => {
+            if (err) {
+                throw err;
+            }
+        
+            // write csvOutput to a file
+            try {
+                fs.writeFileSync(path.join(metaFilePath), csvOutput);
+            } catch (e) {
+                console.error(e);
+            }
+        });
+    }
+
+    return true
 }

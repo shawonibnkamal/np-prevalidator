@@ -73,7 +73,15 @@ ipcMain.handle(
   validationController.fixUnmatchedDataFiles
 );
 ipcMain.handle(
-  "acceptMetaSuggestion",
-  validationController.acceptMetaSuggestion
+  "acceptSuggestion",
+  validationController.acceptSuggestion
+);
+ipcMain.handle(
+  "rejectSuggestion",
+  validationController.rejectSuggestion
+);
+ipcMain.handle(
+  "finishSuggestion",
+  validationController.finishSuggestion
 );
 // index.html controllers end ==================================

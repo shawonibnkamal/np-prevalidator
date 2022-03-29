@@ -257,7 +257,7 @@ const fixIssues = async () => {
                         <div class="flex-justify">
                             ${data[i].similar[j]}
                             <span>
-                                <button class="btn btn-positive acceptSuggestion" data-type="${state.fixIssuesType}" 
+                                <button class="btn btn-positive acceptSuggestion"  
                                 data-filename="${data[i].filename}" data-similar="${data[i].similar[j]}" >
                                     Accept
                                 </button>
@@ -272,7 +272,7 @@ const fixIssues = async () => {
         html += `
                 <tr>
                     <td>
-                        <button class="btn btn-negative pull-right">Reject All</button>
+                        <button class="btn btn-negative pull-right rejectSuggestion" data-filename="${data[i].filename}">Reject All</button>
                     </td>
                 </tr>
                 </table>
@@ -398,19 +398,44 @@ const buttonHandlers = function() {
 }
 
 const acceptSuggestionHandlers = function() {
-    // Handler for accepting meta suggestion
+    // Handler for accepting suggestion
     let acceptSuggestion = document.getElementsByClassName("acceptSuggestion");
 
     for (let i = 0; i < acceptSuggestion.length; i++) {
         acceptSuggestion[i].addEventListener('click', async(event) => {
-            let type = acceptSuggestion[i].getAttribute("data-type");
+            let type = state.fixIssuesType;
             let filename = acceptSuggestion[i].getAttribute("data-filename");
             let similar = acceptSuggestion[i].getAttribute("data-similar");
-            console.log(type, filename, similar);
-            res = await window.api.acceptMetaSuggestion(type, filename, similar);
+            console.log("accept", type, filename, similar);
+            res = await window.api.acceptSuggestion(type, filename, similar);
             if (res) {
                 fixIssues();
             }
         });
     }
+
+    // Handler for rejecting suggestion
+    let rejectSuggestion = document.getElementsByClassName("rejectSuggestion");
+
+    for (let i = 0; i < rejectSuggestion.length; i++) {
+        rejectSuggestion[i].addEventListener('click', async(event) => {
+            let type = state.fixIssuesType;
+            let filename = rejectSuggestion[i].getAttribute("data-filename");
+            console.log("reject", type, filename);
+            res = await window.api.rejectSuggestion(type, filename);
+            if (res) {
+                fixIssues();
+            }
+        });
+    }
+
+    // Handler for closing suggestions
+    let finishSuggestion = document.getElementById("closeModal");
+
+    finishSuggestion.addEventListener('click', async(event) => {
+        let type = state.fixIssuesType;
+        res = await window.api.finishSuggestion(type);
+    });
+    
 }
+
