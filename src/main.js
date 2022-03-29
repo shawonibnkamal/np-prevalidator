@@ -72,4 +72,8 @@ ipcMain.handle(
   "fixUnmatchedDataFiles",
   validationController.fixUnmatchedDataFiles
 );
+ipcMain.handle(
+  "acceptMetaSuggestion",
+  validationController.acceptMetaSuggestion
+);
 // index.html controllers end ==================================

@@ -203,7 +203,7 @@ window.api.showValidationResult((data) => {
 });
 
 // type can be of "meta" and "rawdata"
-const fixIssues = async (event) => {
+const fixIssues = async () => {
     //open modal
     let result;
     if (state.fixIssuesType == "meta") {
@@ -244,7 +244,10 @@ const fixIssues = async (event) => {
                         <div class="flex-justify">
                             ${data[i].similar[j]}
                             <span>
-                                <button class="btn btn-positive">Accept</button>
+                                <button class="btn btn-positive acceptSuggestion" id="${state.fixIssuesType}Accept" 
+                                data-metaId="${state.pagination * 10 + i}" data-similar="${data[i].similar[j]}" >
+                                    Accept
+                                </button>
                                 <button class="btn btn-negative">Reject</button>
                             </span>
                         </div>
@@ -279,8 +282,13 @@ const fixIssues = async (event) => {
     }
     document.getElementById("currentPage").innerHTML = `Page ${current+1} out of ${total}`;
 
+    const dialog = document.getElementById('modal');
+    if(!dialog.open) {
+        document.getElementById('modal').showModal();
+    }
+    
 
-    document.getElementById('modal').showModal();
+    acceptSuggestionHandlers();
 }
 
 const buttonHandlers = function() {
@@ -369,4 +377,21 @@ const buttonHandlers = function() {
     }
 
     document.getElementById('closeModal').onclick = () => document.getElementById('modal').close(false);
+}
+
+const acceptSuggestionHandlers = function() {
+    // Handler for accepting meta suggestion
+    let acceptSuggestion = document.getElementsByClassName("acceptSuggestion");
+
+    for (let i = 0; i < acceptSuggestion.length; i++) {
+        acceptSuggestion[i].addEventListener('click', async(event) => {
+            let metaId = acceptSuggestion[i].getAttribute("data-metaId");
+            let similarFilename = acceptSuggestion[i].getAttribute("data-similar");
+            console.log(metaId, similarFilename);
+            res = await window.api.acceptMetaSuggestion(metaId, similarFilename);
+            if (res) {
+                fixIssues();
+            }
+        });
+    }
 }

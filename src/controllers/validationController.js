@@ -334,7 +334,6 @@ const getUnmatchedMetaHelper = function(pagination=-1, output="string") {
         let similarFilesList = [];
         filesMap.forEach((value, key, map) => {
             if (value.matchedWithMeta == false) {
-                console.log(value);
                 let similarity = similarStrings(unmatchedMetaFilename, key);
                 if (similarity > 0.75) {
                     similarFilesList.push({filename: key, similarity: similarity});
@@ -506,9 +505,19 @@ exports.fixUnmatchedMeta = async(event, args) => {
     return data;
 }
 
+// Get unmatched raw data files json
+// To be used in frontend of fix issues button
 exports.fixUnmatchedDataFiles = async(event, args) => {
     console.log("Fix data files issues clicked!");
     let pagination = args;
     let data = getUnmatchedRawDataFilesHelper(pagination, "array");
     return data;
+}
+
+exports.acceptMetaSuggestion = async(event, metaId, similarFilename) => {
+    console.log(metaId, similarFilename);
+
+    
+
+    return true;
 }
