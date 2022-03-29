@@ -17,7 +17,7 @@ const API = {
     exportDuplicateFilenamesInMeta: () => {ipcRenderer.send("exportDuplicateFilenamesInMeta")},
     fixUnmatchedMeta: (pagination) => ipcRenderer.invoke("fixUnmatchedMeta", pagination),
     fixUnmatchedDataFiles: (pagination) => ipcRenderer.invoke("fixUnmatchedDataFiles", pagination),
-    acceptMetaSuggestion: (metaId, similarFilename) => ipcRenderer.invoke("acceptMetaSuggestion", metaId, similarFilename)
+    acceptMetaSuggestion: (type, filename, similar) => ipcRenderer.invoke("acceptMetaSuggestion", type, filename, similar)
 }
 
 contextBridge.exposeInMainWorld("api", API);

@@ -528,10 +528,23 @@ exports.fixUnmatchedDataFiles = async(event, args) => {
     return data;
 }
 
-exports.acceptMetaSuggestion = async(event, metaId, similarFilename) => {
-    console.log(metaId, similarFilename);
+exports.acceptMetaSuggestion = async(event, type, filename, similar) => {
+    console.log(type, filename, similar);
+    if (type == "meta") {
+        let value = metaMap.get(filename);
+        value.filename = similar;
+    
+        unmatchedMetaMap.delete(filename);
+        matchedMetaMap.set(filename, value);
+        metaMap.delete(filename);
+        metaMap.set(filename, value);
+    } else if (type == "rawdata") {
+        let value = filesMap.get(filename);
 
-
+        filesMap.delete(filename);
+        matchedFilesMap.set(filename, value);
+        unmatchedFilesMap.delete(filename);
+    }
 
     return true;
 }

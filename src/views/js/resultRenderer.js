@@ -235,28 +235,46 @@ const fixIssues = async () => {
             <td>${data[i].filename}</td>
             <td>
                 <table>
+                <tr>
+                    <table>
         `;
 
-        for (let j=0; j < data[i].similar.length; j++) {
+        
+
+        if (data[i].similar.length == 0) {
             html += `
+                <tr>
+                    <td>
+                        No suggestions available.
+                    </td>
+                </tr>
+            `;
+        } else {
+            for (let j=0; j < data[i].similar.length; j++) {
+                html += `
                 <tr>
                     <td>
                         <div class="flex-justify">
                             ${data[i].similar[j]}
                             <span>
-                                <button class="btn btn-positive acceptSuggestion" id="${state.fixIssuesType}Accept" 
-                                data-metaId="${state.pagination * 10 + i}" data-similar="${data[i].similar[j]}" >
+                                <button class="btn btn-positive acceptSuggestion" data-type="${state.fixIssuesType}" 
+                                data-filename="${data[i].filename}" data-similar="${data[i].similar[j]}" >
                                     Accept
                                 </button>
-                                <button class="btn btn-negative">Reject</button>
                             </span>
                         </div>
                     </td>
                 </tr>
-            `;
+                `;
+            }
         }
 
         html += `
+                <tr>
+                    <td>
+                        <button class="btn btn-negative pull-right">Reject All</button>
+                    </td>
+                </tr>
                 </table>
             </td>
         </tr>
@@ -385,10 +403,11 @@ const acceptSuggestionHandlers = function() {
 
     for (let i = 0; i < acceptSuggestion.length; i++) {
         acceptSuggestion[i].addEventListener('click', async(event) => {
-            let metaId = acceptSuggestion[i].getAttribute("data-metaId");
-            let similarFilename = acceptSuggestion[i].getAttribute("data-similar");
-            console.log(metaId, similarFilename);
-            res = await window.api.acceptMetaSuggestion(metaId, similarFilename);
+            let type = acceptSuggestion[i].getAttribute("data-type");
+            let filename = acceptSuggestion[i].getAttribute("data-filename");
+            let similar = acceptSuggestion[i].getAttribute("data-similar");
+            console.log(type, filename, similar);
+            res = await window.api.acceptMetaSuggestion(type, filename, similar);
             if (res) {
                 fixIssues();
             }
