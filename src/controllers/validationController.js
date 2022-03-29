@@ -29,9 +29,9 @@ let directoryPath = "/Users/shawonibnkamal/Documents/Honours Project/Sample data
 let filesMap = new Map(); // List of files from directory filename:path
 let matchedFilesMap = new Map(); // List of raw data files match
 let unmatchedFilesMap = new Map(); // List of raw data files unmatched
-let meta = []; // List of all meta
-let matchedMeta = []; // List of meta with filenames matched
-let unmatchedMeta = []; // List of meta without filenames matched
+let metaMap = new Map(); // List of all meta
+let matchedMetaMap = new Map(); // List of meta with filenames matched
+let unmatchedMetaMap = new Map(); // List of meta without filenames matched
 let duplicateFilenamesInMeta = new Set(); // List of meta with duplicate filenames
 
 
@@ -78,20 +78,24 @@ const getAllFiles = async function(dirPath, filesMap) {
 // Helper function to verify meta headers
 const verifyMetaFileHeaderFields = function () {
     // verify if each column is existing
-    let metaFileHeaderFields = Object.keys(meta[0]);
+
+    let metaFileHeaderFields = Object.keys(Array.from(metaMap.values())[0]);
     
+    
+
     for (let i=0; i < metaFileHeaderFields.length; i++) {
         metaFileHeaderFields[i] = metaFileHeaderFields[i].toLowerCase().trim();
     }
   
     let missingColumns = [];
     
-    for(var i =0;i<header_fields.length;i++){
+    for(let i =0;i<header_fields.length;i++){
       // check = meta_file_obj_arr[i].replace(/\s/g, "");
       if(!metaFileHeaderFields.includes(header_fields[i])){
         missingColumns.push(header_fields[i]);
       }
     }
+    
     
     return missingColumns;
 }
@@ -143,9 +147,9 @@ exports.selectValidate = async (event, args) => {
     console.log("Select Validate");
 
     // Empty out arrayst
-    meta = []; // List of all meta
-    matchedMeta = []; // List of meta with filenames matched
-    unmatchedMeta = []; // List of meta without filenames matched
+    metaMap = new Map(); // List of all meta
+    matchedMetaMap = new Map(); // List of meta with filenames matched
+    unmatchedMetaMap = new Map(); // List of meta without filenames matched
     duplicateFilenamesInMeta = new Set(); // List of meta with duplicate filenames
 
     if (!metaFilePath || !directoryPath) {
@@ -158,7 +162,7 @@ exports.selectValidate = async (event, args) => {
     unmatchedFilesMap = new Map(filesMap);
     
     // Read meta from csv
-    meta = await csvtojson().fromFile(metaFilePath)
+    let metaList = await csvtojson().fromFile(metaFilePath)
     .preFileLine((fileLine,idx)=>{
         if (idx === 0 ) {
             return fileLine.toLowerCase(); // set header fields to lower case
@@ -167,29 +171,34 @@ exports.selectValidate = async (event, args) => {
         }
     });
 
+    for (let i=0; i < metaList.length; i++) {
+        metaMap.set(metaList[i].filename, metaList[i]);
+    }
+
     // Check if header files are present in meta
     let missingHeaderFields = verifyMetaFileHeaderFields();
 
+
     // Get matchedMeta and unmatchedMeta
-    for (let i=0; i < meta.length; i++) {
-        if (filesMap.has(meta[i]['filename'])) {
+    for (let i=0; i < metaList.length; i++) {
+        if (filesMap.has(metaList[i]['filename'])) {
             // Matched found
-            let filesMapValue = filesMap.get(meta[i]['filename']);
+            let filesMapValue = filesMap.get(metaList[i]['filename']);
 
             // Check for duplicates
             if (filesMapValue.matchedWithMeta == true) {
-                duplicateFilenamesInMeta.add(meta[i]['filename']);
+                duplicateFilenamesInMeta.add(metaList[i]['filename']);
             } else {
-                matchedMeta.push(meta[i]);
-                filesMap.set(meta[i]['filename'], {filename: filesMapValue.filename, matchedWithMeta: true});
+                matchedMetaMap.set(metaList[i]['filename'], metaList[i]);
+                filesMap.set(metaList[i]['filename'], {filename: filesMapValue.filename, matchedWithMeta: true});
                 // Unmatched and matched hash maps
-                matchedFilesMap.set(meta[i]['filename'], {filename: filesMapValue.filename, matchedWithMeta: true});
-                unmatchedFilesMap.delete(meta[i]['filename']);
+                matchedFilesMap.set(metaList[i]['filename'], {filename: filesMapValue.filename, matchedWithMeta: true});
+                unmatchedFilesMap.delete(metaList[i]['filename']);
             }
             
         } else {
             // No matches found
-            unmatchedMeta.push({filename: meta[i]['filename'], similar: ""});
+            unmatchedMetaMap.set(metaList[i]['filename'], {filename: metaList[i]['filename'], similar: ""});
         }
     }
 
@@ -197,11 +206,11 @@ exports.selectValidate = async (event, args) => {
     BrowserWindow.getFocusedWindow().loadFile('./views/html/result.html');
     BrowserWindow.getFocusedWindow().once('ready-to-show', () => {
         BrowserWindow.getFocusedWindow().webContents.send("showValidationResult", {
-            numMatched: matchedMeta.length,
+            numMatched: matchedMetaMap.size,
             missingHeaderFields: missingHeaderFields,
             missingFields: 0,
-            unmatchedMeta: meta.length - matchedMeta.length,
-            unmatchedFiles: filesMap.size - matchedMeta.length,
+            unmatchedMeta: metaList.length - matchedMetaMap.size,
+            unmatchedFiles: filesMap.size - matchedMetaMap.size,
             duplicateFilenamesInMeta: duplicateFilenamesInMeta.size,
         })
     })
@@ -318,6 +327,8 @@ const compare = function(a, b) {
 // 0 pagination means calculate first page of 10 entries
 // output can be of "string" and "array"
 const getUnmatchedMetaHelper = function(pagination=-1, output="string") {
+    let unmatchedMeta = Array.from(unmatchedMetaMap.values());
+
     // Show 10 entries only if pagination applied
     let start = 0
     let end = unmatchedMeta.length
@@ -385,6 +396,9 @@ const getUnmatchedRawDataFilesHelper = function(pagination=-1, output="string") 
     // Show 10 entries only if pagination applied
     let start = 0
     let end = unmatchedFilesList.length
+
+    let unmatchedMetaList = Array.from(unmatchedMetaMap.values());
+
     if (pagination >= 0) {
         start = 10 * pagination + 1;
         if (start > unmatchedFilesList.length) {
@@ -396,10 +410,10 @@ const getUnmatchedRawDataFilesHelper = function(pagination=-1, output="string") 
     for (let i = start; i < end; i++) {
         let unmatchedFilename = unmatchedFilesList[i]['filename'];
         let similarMetaList = [];
-        for (let j = 0; j < meta.length; j++) {
-            let similarity = similarStrings(unmatchedFilename, meta[j]['filename']);
+        for (let j = 0; j < unmatchedMetaList.length; j++) {
+            let similarity = similarStrings(unmatchedFilename, unmatchedMetaList[j]['filename']);
             if (similarity > 0.75) {
-                similarMetaList.push({filename: meta[j]['filename'], similarity: similarity});
+                similarMetaList.push({filename: unmatchedMetaList[j]['filename'], similarity: similarity});
             }
         }
         similarMetaList.sort(compare);
@@ -517,7 +531,7 @@ exports.fixUnmatchedDataFiles = async(event, args) => {
 exports.acceptMetaSuggestion = async(event, metaId, similarFilename) => {
     console.log(metaId, similarFilename);
 
-    
+
 
     return true;
 }
