@@ -1,7 +1,7 @@
 {
   "name": "Nature's Palette Validator",
   "version": "1.0.0",
-  "description": "A minimal Electron application",
+  "description": "Validator tool for the online Nature's Palette Repository",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -9,15 +9,16 @@
     "app:dist": "electron-builder",
     "postinstall": "electron-builder install-app-deps"
   },
-  "repository": "https://github.com/electron/electron-quick-start",
+  "repository": "https://github.com/shawonibnkamal/np-prevalidator",
   "keywords": [
-    "Electron",
-    "quick",
-    "start",
-    "tutorial",
-    "demo"
+    "Nature",
+    "Palette",
+    "Validator",
+    "Data",
+    "Curation",
+    "Validation"
   ],
-  "author": "GitHub",
+  "author": "Shawon Ibn Kamal <sikamal@mun.ca>",
   "license": "CC0-1.0",
   "devDependencies": {
     "electron": "^16.0.5",
@@ -28,9 +29,7 @@
   },
   "dependencies": {
     "archiver": "^5.3.0",
-    "csv-parse": "^5.0.4",
     "csvtojson": "^2.0.10",
-    "danfojs-node": "^1.0.2",
     "heap": "^0.2.7",
     "json-2-csv": "^3.17.0",
     "string-similarity": "^4.0.4"

@@ -1,6 +1,5 @@
 const {BrowserWindow, dialog} = require('electron');
 const fs=require('fs');
-const {parse} = require('csv-parse')
 const archiver = require('archiver');
 const path = require('path');
 const csvtojson = require("csvtojson");
@@ -25,8 +24,13 @@ const header_fields = [
     "replicate"
 ];
 
-let metaFilePath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/updated_metadata.csv"; // Directory of meta file csv
-let directoryPath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/RankinData"; // Direction of data files folder
+// Directory of meta file csv
+let metaFilePath;
+// let metaFilePath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/updated_metadata.csv";
+
+// Direction of data files folder
+let directoryPath;
+// let directoryPath = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/RankinData"; 
 
 let filesMap = new Map(); // List of files from directory filename:path
 let matchedFilesMap = new Map(); // List of raw data files match
@@ -36,7 +40,6 @@ let matchedMetaMap = new Map(); // List of meta with filenames matched
 let unmatchedMetaMap = new Map(); // List of meta without filenames matched
 let duplicateFilenamesInMeta = new Set(); // List of meta with duplicate filenames
 let missingHeaderFields = [] // List of missing header fields
-
 
 // Handler after selecting meta button
 exports.selectMeta = async (event, args) => {
@@ -59,6 +62,14 @@ exports.selectDirectory = async (event, args) => {
     return directoryPath;
 }
 
+// Handler for goBack in results page
+exports.goBack = () => {
+    console.log("Go Back");
+    metaFilePath = null;
+    directoryPath = null;
+    BrowserWindow.getFocusedWindow().loadFile('./views/html/index.html');
+}
+
 // Helper function to get list of all files recursively
 const getAllFiles = function(dirPath, filesMap) {
     files = fs.readdirSync(dirPath)
@@ -69,7 +80,7 @@ const getAllFiles = function(dirPath, filesMap) {
         if (fs.statSync(dirPath + "/" + file).isDirectory()) {
             filesMap = getAllFiles(dirPath + "/" + file, filesMap)
         } else {
-            filesMap.set(file, {filename: path.join(dirPath, "/", file), matchedWithMeta: false}); //[path, matchedWithMeta]
+            filesMap.set(file, {filename: path.join(dirPath, "/", file)}); //[path, matchedWithMeta]
         }
     })
 
@@ -150,14 +161,13 @@ exports.selectValidate = async (event, args) => {
             let filesMapValue = filesMap.get(metaList[i]['filename']);
 
             // Check for duplicates
-            if (filesMapValue.matchedWithMeta == true) {
-                //console.log(filesMapValue);
+            if (matchedFilesMap.has(metaList[i]['filename'])) {
                 duplicateFilenamesInMeta.add(metaList[i]['filename']);
             } else {
                 matchedMetaMap.set(metaList[i]['filename'], metaList[i]);
-                filesMap.set(metaList[i]['filename'], {filename: filesMapValue.filename, matchedWithMeta: true});
+                filesMap.set(metaList[i]['filename'], {filename: filesMapValue.filename});
                 // Unmatched and matched hash maps
-                matchedFilesMap.set(metaList[i]['filename'], {filename: filesMapValue.filename, matchedWithMeta: true});
+                matchedFilesMap.set(metaList[i]['filename'], {filename: filesMapValue.filename});
                 unmatchedFilesMap.delete(metaList[i]['filename']);
             }
             
@@ -233,7 +243,6 @@ exports.exportValidatedFiles = async (event, args) => {
         archive.pipe(stream);
         // append files
         for(let i = 0; i < matchedMetaList.length; i++) {
-            //console.log(filesMap.get(matchedMeta[i]['filename'])[0])
             archive.file(filesMap.get(matchedMetaList[i]['filename']).filename, {name: matchedMetaList[i]['filename']});
         }
         archive.on('error', err => {throw err;});
@@ -301,17 +310,14 @@ const getUnmatchedMetaHelper = function(pagination=-1, output="string") {
         let similarFilesList = new Heap(function(a, b) {
             return a.similarity - b.similarity;
         });
-        filesMap.forEach((value, key, map) => {
-            if (value.matchedWithMeta == false) {
-                let similarity = stringSimilarity.compareTwoStrings(unmatchedMetaFilename, key);
-                similarFilesList.push({filename: key, similarity: similarity});
-                if (similarFilesList.size() > 7) {
-                    similarFilesList.pop();
-                }
+        unmatchedFilesMap.forEach((value, key, map) => {
+            let similarity = stringSimilarity.compareTwoStrings(unmatchedMetaFilename, key);
+            similarFilesList.push({filename: key, similarity: similarity});
+            if (similarFilesList.size() > 7) {
+                similarFilesList.pop();
             }
         });
         similarFilesList = similarFilesList.toArray();
-        console.log(similarFilesList);
         if (output == "string") {
             unmatchedMeta[i]['similar'] = ``;
         } else {
@@ -342,12 +348,10 @@ const getUnmatchedMetaHelper = function(pagination=-1, output="string") {
 const getUnmatchedRawDataFilesHelper = function(pagination=-1, output="string") {
     let unmatchedFilesList = [];
     for (const [key, value] of unmatchedFilesMap.entries()) {
-        if (value.matchedWithMeta == false) {
-            unmatchedFilesList.push({
-                filename: key,
-                similar: ""
-            });
-        }
+        unmatchedFilesList.push({
+            filename: key,
+            similar: ""
+        });
     }
     // Show 10 entries only if pagination applied
     let start = 0
@@ -486,22 +490,31 @@ exports.fixUnmatchedDataFiles = async(event, args) => {
 exports.acceptSuggestion = async(event, type, filename, similar) => {
     console.log("Accept suggestion", type, filename, similar);
     if (type == "meta") {
-        let value = metaMap.get(filename);
-        value.filename = similar;
-    
-        unmatchedMetaMap.delete(filename);
-        matchedMetaMap.set(filename, value);
-        metaMap.delete(filename);
-        metaMap.set(filename, value);
-    } else if (type == "rawdata") {
-        let value = filesMap.get(filename);
+        // Change name in meta maps, remove from unmatchmedMetaMap and insert it to matchedMetaMap
+        let metaMapValue = metaMap.get(filename);
+        metaMapValue.filename = similar;
 
-        unmatchedFilesMap.delete(filename);
-        matchedFilesMap.set(filename, value);
-        filesMap.delete(filename);
+        unmatchedMetaMap.delete(filename);
+        matchedMetaMap.set(similar, metaMapValue);
+        metaMap.delete(filename);
+        metaMap.set(similar, metaMapValue);
+
+        // Remove file from unmatchedFileMap and insert it to matchedFileMap
+        let filesMapValue = filesMap.get(similar);
+        unmatchedFilesMap.delete(similar);
+        matchedFilesMap.set(similar, filesMapValue);
+
+    } else if (type == "rawdata") {
+        // Remove from unmatchmedMetaMap and insert it to matchedMetaMap
+        let metaMapValue = metaMap.get(similar);
+        unmatchedMetaMap.delete(similar);
+        matchedMetaMap.set(similar, metaMapValue);
+
+        // Update filename, Remove file from unmatchedFileMap and insert it to matchedFileMap
+        let filesMapValue = filesMap.get(filename);
 
         // Update path
-        let oldPath = value.filename;
+        let oldPath = filesMapValue.filename;
         let newPath = oldPath.split("/");
         newPath = newPath.slice(0, newPath.length - 1).join("/")
         if (newPath.length !== 0) {
@@ -509,8 +522,10 @@ exports.acceptSuggestion = async(event, type, filename, similar) => {
         }
         newPath += similar;
 
-        value.filename = newPath;
-        filesMap.set(filename, value);
+        unmatchedFilesMap.delete(filename);
+        filesMap.delete(filename);
+        filesMapValue.filename = newPath;
+        filesMap.set(similar, filesMapValue);
 
         fs.rename(oldPath, newPath, function(err) {
             if ( err ) console.log('ERROR: ' + err);

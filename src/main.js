@@ -1,7 +1,6 @@
 const { app, BrowserWindow, dialog, ipcMain } = require("electron");
 const path = require("path");
 const validationController = require("./controllers/validationController");
-const navigationController = require("./controllers/navigationController");
 
 let mainWindow; // BrowserWindow
 
@@ -53,7 +52,7 @@ ipcMain.handle("selectMeta", validationController.selectMeta);
 ipcMain.handle("selectDir", validationController.selectDirectory);
 ipcMain.handle("selectValidate", validationController.selectValidate);
 
-ipcMain.handle("goBack", navigationController.goBack);
+ipcMain.handle("goBack", validationController.goBack);
 ipcMain.on("exportValidatedFiles", validationController.exportValidatedFiles);
 ipcMain.on("exportUnmatchedMeta", validationController.exportUnmatchedMeta);
 ipcMain.on(
