@@ -394,7 +394,19 @@ const buttonHandlers = function() {
         });
     }
 
-    document.getElementById('closeModal').onclick = () => document.getElementById('modal').close(false);
+    //document.getElementById('closeModal').onclick = () => document.getElementById('modal').close(false);
+
+    // Handler for finishing suggestions
+    let finishSuggestion = document.getElementById("finishSuggestion");
+
+    if (finishSuggestion) {
+        finishSuggestion.addEventListener('click', async(event) => {
+            event.preventDefault();
+            console.log("finish suggestion");
+            let type = state.fixIssuesType;
+            res = await window.api.finishSuggestion(type);
+        });
+    }
 }
 
 const acceptSuggestionHandlers = function() {
@@ -428,14 +440,6 @@ const acceptSuggestionHandlers = function() {
             }
         });
     }
-
-    // Handler for closing suggestions
-    let finishSuggestion = document.getElementById("closeModal");
-
-    finishSuggestion.addEventListener('click', async(event) => {
-        let type = state.fixIssuesType;
-        res = await window.api.finishSuggestion(type);
-    });
     
 }
 

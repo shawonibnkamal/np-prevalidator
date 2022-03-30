@@ -58,26 +58,26 @@ exports.selectDirectory = async (event, args) => {
 }
 
 // Helper function to get list of all files recursively
-const getAllFiles = async function(dirPath, filesMap) {
-    return new Promise((resolve, reject) => {
-        files = fs.readdirSync(dirPath)
+const getAllFiles = function(dirPath, filesMap) {
+    files = fs.readdirSync(dirPath)
 
-        filesMap = filesMap || new Map()
-    
-        files.forEach(function(file) {
-            if (fs.statSync(dirPath + "/" + file).isDirectory()) {
-                filesMap = getAllFiles(dirPath + "/" + file, filesMap)
-            } else {
-                filesMap.set(file, {filename: path.join(dirPath, "/", file), matchedWithMeta: false}); //[path, matchedWithMeta]
-            }
-        })
-    
-        resolve(filesMap)
+    filesMap = filesMap || new Map();
+
+    files.forEach(function(file) {
+        if (fs.statSync(dirPath + "/" + file).isDirectory()) {
+            filesMap = getAllFiles(dirPath + "/" + file, filesMap)
+        } else {
+            filesMap.set(file, {filename: path.join(dirPath, "/", file), matchedWithMeta: false}); //[path, matchedWithMeta]
+        }
     })
+
+    console.log(dirPath, filesMap)
+
+    return filesMap;
 }
 
 // Helper function to verify meta headers
-const verifyMetaFileHeaderFields = function () {
+const verifyMetaFileHeaderFields = async () => {
     // verify if each column is existing   
 
     let metaFileHeaderFields = Object.keys(Array.from(metaMap.values())[0]);
@@ -141,12 +141,18 @@ const similarStrings = function(s1, s2) {
     return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
 }
 
-const selectValidateHelper = async() => {
+// Handler after selecting validate button
+exports.selectValidate = async (event, args) => {
+    console.log("Select Validate");
+
     // Empty out arrayst
     metaMap = new Map(); // List of all meta
     matchedMetaMap = new Map(); // List of meta with filenames matched
     unmatchedMetaMap = new Map(); // List of meta without filenames matched
     duplicateFilenamesInMeta = new Set(); // List of meta with duplicate filenames
+    filesMap = null;
+    matchedFilesMap = new Map();
+    unmatchedFilesMap = null;
 
     if (!metaFilePath || !directoryPath) {
         console.log("Files not selected");
@@ -154,9 +160,10 @@ const selectValidateHelper = async() => {
     }
         
     // Read datafile names from directory
-    filesMap = await getAllFiles(directoryPath);
+    filesMap = getAllFiles(directoryPath);    
     unmatchedFilesMap = new Map(filesMap);
     
+
     // Read meta from csv
     let metaList = await csvtojson().fromFile(metaFilePath)
     .preFileLine((fileLine,idx)=>{
@@ -167,13 +174,16 @@ const selectValidateHelper = async() => {
         }
     });
 
+    
+
     for (let i=0; i < metaList.length; i++) {
         metaMap.set(metaList[i].filename, metaList[i]);
     }
 
     // Check if header files are present in meta
-    missingHeaderFields = verifyMetaFileHeaderFields();
+    missingHeaderFields = await verifyMetaFileHeaderFields();
 
+    
 
     // Get matchedMeta and unmatchedMeta
     for (let i=0; i < metaList.length; i++) {
@@ -183,6 +193,7 @@ const selectValidateHelper = async() => {
 
             // Check for duplicates
             if (filesMapValue.matchedWithMeta == true) {
+                //console.log(filesMapValue);
                 duplicateFilenamesInMeta.add(metaList[i]['filename']);
             } else {
                 matchedMetaMap.set(metaList[i]['filename'], metaList[i]);
@@ -197,13 +208,6 @@ const selectValidateHelper = async() => {
             unmatchedMetaMap.set(metaList[i]['filename'], {filename: metaList[i]['filename'], similar: ""});
         }
     }
-}
-
-// Handler after selecting validate button
-exports.selectValidate = async (event, args) => {
-    console.log("Select Validate");
-
-    await selectValidateHelper();
 
     // Show results
     BrowserWindow.getFocusedWindow().loadFile('./views/html/result.html');
@@ -595,12 +599,16 @@ exports.finishSuggestion = async (event, type) => {
             }
         
             // write csvOutput to a file
-            try {
-                fs.writeFileSync(path.join(metaFilePath), csvOutput);
-            } catch (e) {
-                console.error(e);
-            }
+            fs.writeFile(path.join(metaFilePath), csvOutput, (err) => {
+                if (err) {
+                    console.error(err);
+                }
+                exports.selectValidate();
+            });
+
         });
+    } else {
+        exports.selectValidate();
     }
 
     return true

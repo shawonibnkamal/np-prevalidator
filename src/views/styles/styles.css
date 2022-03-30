@@ -6,6 +6,18 @@
     margin: 0 auto;
 }
 
+.homeContainer {
+    max-width: 600px;
+    background-color: whitesmoke;
+    margin-top: 20px;
+}
+
+.customFormGroup {
+    background-color: #FFF;
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+
 .color-red {
     color:#fc605b;
 }
