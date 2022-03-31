@@ -5,8 +5,8 @@ const path = require('path');
 const csvtojson = require("csvtojson");
 const {json2csv} = require('json-2-csv');
 const { performance } = require('perf_hooks');
-const Heap = require('heap');
-const stringSimilarity = require('string-similarity');
+const { Heap } = require('heap-js');
+const levenshtein = require('js-levenshtein');
 
 const header_fields = [
     "filename",
@@ -287,6 +287,77 @@ exports.exportDuplicateFilenamesInMeta = async (event, args) => {
     });
 }
 
+
+const checkType = (c) => {
+    if (/^[a-zA-Z]+$/.test(c)) {
+        return "alpha";
+    } else if (c.match(/^[0-9]+$/) != null) {
+        return "digit";
+    } else {
+        return null;
+    }
+}
+
+const similarStringsHelper = (str) => {
+    list = new Set();
+
+    curr = "";
+    for (let x = 0; x < str.length-1; x++) {
+        c1 = str[x];
+        c2 = str[x+1];
+
+        if (checkType(c1) != null) {
+            curr += c1;
+        }
+
+        // change of alpha to other
+        if (checkType(c1) != checkType(c2)) {
+            if (curr != "") {
+                list.add(curr);
+            }
+            curr = "";
+        }
+        
+        // change of digit to other
+    }
+    if (checkType(c2) != null) {
+        curr += c2;
+        if (curr != "") {
+            list.add(curr);
+        }
+    }
+    
+    //console.log(list);
+    return list;
+}
+
+const similarStrings = function(s1, s2) {
+    s1 = s1.toLowerCase();
+    s2 = s2.toLowerCase();
+
+    res = 1;
+
+    l1 = similarStringsHelper(s1);
+    l2 = similarStringsHelper(s2);
+
+    if (l1.size > l2.size) {
+        l2.forEach((key) => {
+            if (!l1.has(key)) {
+                res += 1;
+            }
+        });
+    } else {
+        l1.forEach((key) => {
+            if (!l2.has(key)) {
+                res += 1;
+            }
+        });
+    }
+    
+
+    return res * levenshtein(s1, s2);
+}
+
 // Helper function: get list of unmatchedMeta
 // -1 pagination means calculate similar files for all
 // 0 pagination means calculate first page of 10 entries
@@ -307,17 +378,22 @@ const getUnmatchedMetaHelper = function(pagination=-1, output="string") {
 
     for (let i = start; i < end; i++) {
         let unmatchedMetaFilename = unmatchedMeta[i]['filename'];
-        let similarFilesList = new Heap(function(a, b) {
-            return a.similarity - b.similarity;
+        let similarFilesHeap = new Heap(function(a, b) {
+            return b.similarity - a.similarity;
         });
         unmatchedFilesMap.forEach((value, key, map) => {
-            let similarity = stringSimilarity.compareTwoStrings(unmatchedMetaFilename, key);
-            similarFilesList.push({filename: key, similarity: similarity});
-            if (similarFilesList.size() > 7) {
-                similarFilesList.pop();
+            let similarity = similarStrings(unmatchedMetaFilename, key);
+            similarFilesHeap.push({filename: key, similarity: similarity});
+            if (similarFilesHeap.size() > 7) {
+                similarFilesHeap.pop();
             }
         });
-        similarFilesList = similarFilesList.toArray();
+
+        similarFilesList = [];
+        while (similarFilesHeap.size() != 0) {
+            similarFilesList.push(similarFilesHeap.pop());
+        }
+
         if (output == "string") {
             unmatchedMeta[i]['similar'] = ``;
         } else {
@@ -340,6 +416,7 @@ const getUnmatchedMetaHelper = function(pagination=-1, output="string") {
         total: Math.ceil(unmatchedMeta.length / 10)
     };
 }
+
 
 // Helper function: get list of unmatched raw data files
 // -1 pagination means calculate similar files for all
@@ -369,17 +446,21 @@ const getUnmatchedRawDataFilesHelper = function(pagination=-1, output="string") 
 
     for (let i = start; i < end; i++) {
         let unmatchedFilename = unmatchedFilesList[i]['filename'];
-        let similarMetaList = new Heap(function(a, b) {
-            return a.similarity - b.similarity;
+        let similarMetaHeap = new Heap(function(a, b) {
+            return b.similarity - a.similarity;
         });
         for (let j = 0; j < unmatchedMetaList.length; j++) {
-            let similarity = stringSimilarity.compareTwoStrings(unmatchedFilename, unmatchedMetaList[j]['filename']);
-            similarMetaList.push({filename: unmatchedMetaList[j]['filename'], similarity: similarity});
-            if (similarMetaList.size() > 7) {
-                similarMetaList.pop();
+            let similarity = similarStrings(unmatchedFilename, unmatchedMetaList[j]['filename']);
+            similarMetaHeap.push({filename: unmatchedMetaList[j]['filename'], similarity: similarity});
+            if (similarMetaHeap.size() > 7) {
+                similarMetaHeap.pop();
             }
         }
-        similarMetaList = similarMetaList.toArray();
+        similarMetaList = [];
+        while (similarMetaHeap.size() != 0) {
+            similarMetaList.push(similarMetaHeap.pop());
+        }
+
         if (output == "string") {
             unmatchedFilesList[i]['similar'] = ``;
         } else {
