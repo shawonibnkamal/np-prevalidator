@@ -21,13 +21,15 @@ class Rawdata {
 
     filesMap = filesMap || new Map();
 
-    files.forEach(function (file) {
-      if (fs.statSync(dirPath + "/" + file).isDirectory()) {
-        filesMap = this._getAllFiles(dirPath + "/" + file, filesMap);
-      } else {
-        filesMap.set(file, { filename: path.join(dirPath, "/", file) }); //[path, matchedWithMeta]
-      }
-    });
+    files.forEach(
+      function (file) {
+        if (fs.statSync(dirPath + "/" + file).isDirectory()) {
+          filesMap = this._getAllFiles(dirPath + "/" + file, filesMap);
+        } else {
+          filesMap.set(file, { filename: path.join(dirPath, "/", file) }); //[path, matchedWithMeta]
+        }
+      }.bind(this)
+    );
 
     return filesMap;
   }
