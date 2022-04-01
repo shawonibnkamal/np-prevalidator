@@ -186,7 +186,7 @@ window.api.showValidationResult((data) => {
             }
             <div class="form-group">
                 ${data.numMatched > 0 ? 
-                `Number of matched files/meta: ${data.numMatched}<br>
+                `Number of matched metadata and raw data files: ${data.numMatched}<br>
                 <button id="exportValidatedFiles" class="btn btn-default"><span class="icon icon-export icon-text"></span> Export validated metadata and raw data files</button>
                 `
                 :
