@@ -14,6 +14,7 @@ const API = {
     }),
     exportUnmatchedMeta: () => {ipcRenderer.send("exportUnmatchedMeta")},
     exportUnmatchedDataFiles: () => {ipcRenderer.send("exportUnmatchedDataFiles")},
+    exportMissingFields: () => {ipcRenderer.send("exportMissingFields")},
     exportDuplicateFilenamesInMeta: () => {ipcRenderer.send("exportDuplicateFilenamesInMeta")},
     fixUnmatchedMeta: (pagination) => ipcRenderer.invoke("fixUnmatchedMeta", pagination),
     fixUnmatchedDataFiles: (pagination) => ipcRenderer.invoke("fixUnmatchedDataFiles", pagination),

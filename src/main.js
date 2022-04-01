@@ -60,6 +60,10 @@ ipcMain.on(
   validationController.exportUnmatchedDataFiles
 );
 ipcMain.on(
+  "exportMissingFields",
+  validationController.exportMissingFields
+);
+ipcMain.on(
   "exportDuplicateFilenamesInMeta",
   validationController.exportDuplicateFilenamesInMeta
 );

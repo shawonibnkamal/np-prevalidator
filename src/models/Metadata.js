@@ -3,6 +3,7 @@ const csvtojson = require("csvtojson");
 class Metadata {
     constructor(directory) {
         this._metaMap = new Map();
+        this._duplicatesSet = new Set();
         this._directory = null;
     }
 
@@ -22,7 +23,11 @@ class Metadata {
 
 
         for (let i=0; i < metaList.length; i++) {
-            this._metaMap.set(metaList[i].filename, metaList[i]);
+            if (this._metaMap.has(metaList[i].filename)) {
+                this._duplicatesSet.add(metaList[i].filename);
+            } else {
+                this._metaMap.set(metaList[i].filename, metaList[i]);
+            }
         }
     }
 
@@ -32,6 +37,10 @@ class Metadata {
 
     getAllValues() {
         return Array.from(this._metaMap.values());
+    }
+
+    getAllDuplicates() {
+        return Array.from(this._duplicatesSet.keys());
     }
 
     get(key) {

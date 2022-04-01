@@ -45,7 +45,7 @@ window.api.showValidationResult((data) => {
     text += `
     <tr>
         <td>
-            ${data.missingFields.length > 0 ? 
+            ${data.missingFields > 0 ? 
             `<span class="icon icon-record color-red media-object pull-left font-20"></span>`
             : 
             `<span class="icon icon-record color-green media-object pull-left font-20"></span>`
@@ -54,7 +54,7 @@ window.api.showValidationResult((data) => {
             <div> 
                 <strong>Metadata Fields</strong>
                 <div>   
-                ${data.missingFields.length > 0 ? 
+                ${data.missingFields > 0 ? 
                     `Missing required fields in the metadata: ` + data.missingFields 
                 : 
                     `All required fields have been filled.`
@@ -65,7 +65,7 @@ window.api.showValidationResult((data) => {
         <td>
             ${data.missingFields > 0 ?
                 `
-                <button class="btn btn-default"><span class="icon icon-export icon-text"></span> Export issues in csv</button>
+                <button id="exportMissingFields" class="btn btn-default"><span class="icon icon-export icon-text"></span> Export issues in csv</button>
                 `
                 :
                 ``
@@ -343,6 +343,15 @@ const buttonHandlers = function() {
         exportUnmatchedDataFiles.addEventListener('click', async (event) => {
             event.preventDefault();
             window.api.exportUnmatchedDataFiles();
+        });
+    }
+
+    // Handler for exportMissingFields button
+    let exportMissingFields = document.getElementById('exportMissingFields');
+    if (exportMissingFields) {
+        exportMissingFields.addEventListener('click', async (event) => {
+            event.preventDefault();
+            window.api.exportMissingFields();
         });
     }
 
