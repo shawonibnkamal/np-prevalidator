@@ -1,5 +1,5 @@
 {
-  "name": "Nature's Palette Validator",
+  "name": "np-prevalidator",
   "version": "1.0.0",
   "description": "Validator tool for the online Nature's Palette Repository",
   "main": "main.js",
