@@ -98,7 +98,7 @@ const validateMetaFields = async () => {
             }
         }
         if (currEmptyFields.length > 0) {
-            emptyFields.push({filename: metaList[i].filename, missingFields: currEmptyFields.join(", ")})
+            emptyFields.push({ filename: metaList[i].filename, missingFields: currEmptyFields.join(", ") })
         }
     }
 
@@ -574,11 +574,17 @@ exports.acceptSuggestion = async (event, type, filename, similar) => {
         let rawdataModelValue = rawdataModel.get(filename);
 
         // Update path
+        let seperator;
+        if (process.platform == "win32") {
+            seperator = "\\";
+        } else {
+            seperator = "/";
+        }
         let oldPath = rawdataModelValue.filename;
-        let newPath = oldPath.split("/");
-        newPath = newPath.slice(0, newPath.length - 1).join("/");
+        let newPath = oldPath.split(seperator);
+        newPath = newPath.slice(0, newPath.length - 1).join(seperator);
         if (newPath.length !== 0) {
-            newPath += "/";
+            newPath += seperator;
         }
         newPath += similar;
 
