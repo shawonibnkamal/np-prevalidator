@@ -10,7 +10,6 @@ class Rawdata {
 
   // Set from directory
   setFromDirectory(directory) {
-    // directory = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/RankinData";
     this._directory = directory;
     this._filesMap = this._getAllFiles(directory);
   }
@@ -23,6 +22,7 @@ class Rawdata {
 
     files.forEach(
       function (file) {
+        if (file == ".DS_Store") return;
         if (fs.statSync(dirPath + "/" + file).isDirectory()) {
           filesMap = this._getAllFiles(dirPath + "/" + file, filesMap);
         } else {

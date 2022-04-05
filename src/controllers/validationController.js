@@ -28,6 +28,9 @@ const header_fields = [
 let metaDirectory;
 let rawdataDirectory;
 
+metaDirectory = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample Test Case/metadata.csv";
+rawdataDirectory = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample Test Case/rawdataset";
+
 let rawdataModel; // List of files from directory filename:path
 let matchedRawdataModel; // List of raw data files match
 let unmatchedRawdataModel; // List of raw data files unmatched
@@ -184,7 +187,7 @@ exports.exportValidatedFiles = async (event, args) => {
     console.log("Export validated clicked");
     let metadatafile = await dialog.showSaveDialog({
         title: "Input the meta data filename",
-        defaultPath: path.join(__dirname, "/metafile.csv"),
+        defaultPath: path.join(__dirname, "/metadata.csv"),
         buttonLabel: "Save",
         // Restricting the user to only Text Files.
         filters: [
@@ -301,7 +304,7 @@ exports.exportDuplicateFilenamesInMeta = async (event, args) => {
     for (let i = 0; i < duplicatesList.length; i++) {
         duplicatesJSON.push({ filename: duplicatesList[i] });
     }
-    console.log(duplicatesJSON);
+
     // Download csv
     json2csv(duplicatesJSON, (err, csvOutput) => {
         if (err) {
@@ -462,7 +465,7 @@ exports.exportUnmatchedMeta = async (event, args) => {
     console.log("Export unmatched meta clicked");
     let file = await dialog.showSaveDialog({
         title: "Select the File Path to save",
-        defaultPath: path.join(__dirname, "/unmatched_metafile.csv"),
+        defaultPath: path.join(__dirname, "/unmatched_metadata.csv"),
         buttonLabel: "Save",
         // Restricting the user to only Text Files.
         filters: [
@@ -487,7 +490,7 @@ exports.exportUnmatchedMeta = async (event, args) => {
 
         let endTime = performance.now();
         console.log(
-            `Finished exporting unmatched_metafile in ${endTime - startTime
+            `Finished exporting unmatched_metadata in ${endTime - startTime
             } milliseconds`
         );
     });

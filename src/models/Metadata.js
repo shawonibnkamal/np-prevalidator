@@ -8,7 +8,6 @@ class Metadata {
     }
 
     async setFromDirectory(directory) {
-        // directory = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample dataset 2 birds/updated_metadata.csv";
         this._directory = directory;
         
         // Read meta from csv
