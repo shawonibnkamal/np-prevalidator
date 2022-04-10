@@ -28,8 +28,8 @@ const header_fields = [
 let metaDirectory;
 let rawdataDirectory;
 
-metaDirectory = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample Test Case/metadata.csv";
-rawdataDirectory = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample Test Case/rawdataset";
+// metaDirectory = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample Test Case/metadata.csv";
+// rawdataDirectory = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample Test Case/rawdataset";
 
 let rawdataModel; // List of files from directory filename:path
 let matchedRawdataModel; // List of raw data files match
