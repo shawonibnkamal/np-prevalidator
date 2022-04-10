@@ -28,6 +28,7 @@ const header_fields = [
 let metaDirectory;
 let rawdataDirectory;
 
+// Default directory for testing purposes
 // metaDirectory = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample Test Case/metadata.csv";
 // rawdataDirectory = "/Users/shawonibnkamal/Documents/Honours Project/Sample datasets/Sample Test Case/rawdataset";
 

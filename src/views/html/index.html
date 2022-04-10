@@ -14,19 +14,19 @@
     </header>
     <!-- <h1 class="text-center">Nature's Palette Validator</h1> -->
     <div class="container homeContainer">
-      Choose files
+      <label class="customFormLabel2">Choose files</label>
 
       <hr>
 
       <div class="form-group">
-        <div><b>Metadata (.csv)</b></div>
+        <div><label class="customFormLabel">Metadata (.csv)</label></div>
         <div class="customFormGroup">
           <button id="selectMetaData"  class="btn btn-default"><span class="icon icon-folder icon-text"></span> Select metadata csv</button>
           <span id="metadataOutput">No metadata selected</span>
         </div>
       </div>
       <div class="form-group">
-        <div><b>Raw data files (folder)</b></div>
+        <div><label class="customFormLabel">Raw data files (folder)</label></div>
         <div class="customFormGroup">
           <button id="dataFolder"  class="btn btn-default"><span class="icon icon-folder icon-text"></span> Select raw data directory</button>
           <span id="directoryOutput"> No directory selected</span>
@@ -34,7 +34,7 @@
         
       </div>
       <div class="form-group">
-        <button id="validate"  class="btn btn-primary">Validate</button>
+        <button id="validate"  class="btn btn-large btn-primary">Validate</button>
         <div id="validateOutput"></div>
       </div>
     </div>
