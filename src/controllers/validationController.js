@@ -186,6 +186,7 @@ exports.selectValidate = async (event, args) => {
 // Handler after selecting export meta file button
 exports.exportValidatedFiles = async (event, args) => {
     console.log("Export validated clicked");
+    // Prompt metadata file saving directory
     let metadatafile = await dialog.showSaveDialog({
         title: "Input the meta data filename",
         defaultPath: path.join(__dirname, "/metadata.csv"),
@@ -200,7 +201,7 @@ exports.exportValidatedFiles = async (event, args) => {
         properties: [],
     });
 
-    // Download csv
+    // Export csv
     let matchedMetaList = matchedMetaModel.getAllValues();
     json2csv(matchedMetaList, (err, csvOutput) => {
         if (err) {
@@ -211,6 +212,7 @@ exports.exportValidatedFiles = async (event, args) => {
         fs.writeFileSync(path.join(metadatafile.filePath.toString()), csvOutput);
     });
 
+    // Prompt raw data files directory
     let rawdatafiles = await dialog.showSaveDialog({
         title: "Input the raw data filename",
         defaultPath: path.join(__dirname, "/rawdataset.zip"),
@@ -225,7 +227,7 @@ exports.exportValidatedFiles = async (event, args) => {
         properties: [],
     });
 
-    // Zip data files
+    // Zip raw data files
     var stream = fs.createWriteStream(
         path.join(rawdatafiles.filePath.toString())
     );
@@ -235,6 +237,7 @@ exports.exportValidatedFiles = async (event, args) => {
         throw err;
     });
 
+    // Export zip file
     await new Promise((resolve, reject) => {
         archive.pipe(stream);
         // append files
@@ -257,6 +260,7 @@ exports.exportValidatedFiles = async (event, args) => {
 
 // Controller for exporting empty fields in meta
 exports.exportMissingFields = async (event, args) => {
+    // Prompt csv saving directory
     let file = await dialog.showSaveDialog({
         title: "Select the File Path to save",
         defaultPath: path.join(__dirname, "/emptyFields.csv"),
@@ -271,8 +275,10 @@ exports.exportMissingFields = async (event, args) => {
         properties: [],
     });
 
+    // Get empty fields JSON
     let emptyFields = await validateMetaFields();
 
+    // Export csv file
     json2csv(emptyFields, (err, csvOutput) => {
         if (err) {
             throw err;
@@ -306,7 +312,7 @@ exports.exportDuplicateFilenamesInMeta = async (event, args) => {
         duplicatesJSON.push({ filename: duplicatesList[i] });
     }
 
-    // Download csv
+    // Export csv
     json2csv(duplicatesJSON, (err, csvOutput) => {
         if (err) {
             throw err;
@@ -480,7 +486,7 @@ exports.exportUnmatchedMeta = async (event, args) => {
 
     let data = getUnmatchedMetaHelper().data;
 
-    // Download csv
+    // Export csv
     json2csv(data, (err, csvOutput) => {
         if (err) {
             throw err;
@@ -517,7 +523,7 @@ exports.exportUnmatchedDataFiles = async (event, args) => {
 
     let data = getUnmatchedRawDataFilesHelper().data;
 
-    // Download csv
+    // Export csv
     json2csv(data, (err, csvOutput) => {
         if (err) {
             throw err;
@@ -535,7 +541,6 @@ exports.exportUnmatchedDataFiles = async (event, args) => {
 };
 
 // Get unmatched metadata json
-// To be used in frontend of fix issues button
 exports.fixUnmatchedMeta = async (event, args) => {
     console.log("Fix meta issues clicked!");
     let pagination = args;
@@ -544,7 +549,6 @@ exports.fixUnmatchedMeta = async (event, args) => {
 };
 
 // Get unmatched raw data files json
-// To be used in frontend of fix issues button
 exports.fixUnmatchedDataFiles = async (event, args) => {
     console.log("Fix data files issues clicked!");
     let pagination = args;
@@ -552,6 +556,7 @@ exports.fixUnmatchedDataFiles = async (event, args) => {
     return data;
 };
 
+// Handler for accepting a suggestion
 exports.acceptSuggestion = async (event, type, filename, similar) => {
     console.log("Accept suggestion", type, filename, similar);
     if (type == "meta") {
@@ -605,6 +610,7 @@ exports.acceptSuggestion = async (event, type, filename, similar) => {
     return true;
 };
 
+// Handler for rejecting a suggestion
 exports.rejectSuggestion = async (event, type, filename) => {
     console.log("Reject suggestion", type, filename);
 
@@ -617,6 +623,7 @@ exports.rejectSuggestion = async (event, type, filename) => {
     return true;
 };
 
+// Handler for closing suggestion modal
 exports.finishSuggestion = async (event, type) => {
     console.log("Finish suggestion", type);
 

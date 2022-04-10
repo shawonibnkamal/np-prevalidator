@@ -1,5 +1,6 @@
 const levenshtein = require('js-levenshtein');
 
+// Check if a character is alpha or digit
 const checkType = (c) => {
     if (/^[a-zA-Z]+$/.test(c)) {
         return "alpha";
@@ -10,6 +11,7 @@ const checkType = (c) => {
     }
 }
 
+// Additional computation to improve similarity algorithm
 const similarStringsHelper = (str) => {
     list = new Set();
 
@@ -29,8 +31,6 @@ const similarStringsHelper = (str) => {
             }
             curr = "";
         }
-        
-        // change of digit to other
     }
     if (checkType(c2) != null) {
         curr += c2;
@@ -43,6 +43,7 @@ const similarStringsHelper = (str) => {
     return list;
 }
 
+// Main function for similarity algorithm using levenshtein distance
 exports.stringSimilarity = function(s1, s2) {
     s1 = s1.toLowerCase();
     s2 = s2.toLowerCase();
