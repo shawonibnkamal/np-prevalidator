@@ -8,7 +8,6 @@ This is cross-platform offline validation tool built to help prepare submissions
 
 ## Setup development environment
 
-- cd src
 - npm install
 - npm start
 
