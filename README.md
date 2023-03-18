@@ -1,6 +1,6 @@
 # Nature's Palette Validator
 
-This is cross-platform offline validation tool built to help prepare submissions to Nature's Pallete.
+This is cross-platform offline data validation and cleaning tool built to help prepare submissions to Nature's Pallete.
 
 ## Prerequisites
 
